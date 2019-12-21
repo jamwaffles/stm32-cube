@@ -11,8 +11,10 @@ embedded-hal = "0.2.3"
 panic-semihosting = "0.5.3"
 cortex-m-rt = "0.6.11"
 cortex-m = "0.6.1"
+as-slice = "0.1.2"
 
 [dependencies.stm32f1xx-hal]
-version = "0.5.2"
-# path = "../stm32f1xx-hal"
-features = [ "stm32f103" ]
+# version = "0.5.2"
+# Use version of HAL with hacked as-slice dependency to get 1537 item array working
+path = "../stm32f1xx-hal"
+features = [ "stm32f103", "rt" ]
