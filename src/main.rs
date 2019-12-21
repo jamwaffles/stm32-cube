@@ -1,86 +1,78 @@
 #![no_std]
 #![no_main]
 
-use cortex_m_rt::entry;
 use panic_semihosting as _;
+
+use cortex_m::asm::wfi;
+use rtfm::app;
+
+use embedded_hal::digital::v2::OutputPin;
 use stm32f1xx_hal::{
-    delay::Delay,
+    gpio::{gpioc::PC13, Output, PushPull, State},
     pac,
     prelude::*,
-    spi::{Mode, Phase, Polarity, Spi},
+    timer::{CountDownTimer, Event, Timer},
 };
 
 const ON_BYTE: u8 = 0b1111_1100;
 const OFF_BYTE: u8 = 0b1100_0000;
 
-#[entry]
-fn main() -> ! {
-    // Get access to the device specific peripherals from the peripheral access crate
-    let dp = pac::Peripherals::take().unwrap();
-    let cp = cortex_m::Peripherals::take().unwrap();
+#[app(device = stm32f1xx_hal::pac, peripherals = true)]
+const APP: () = {
+    struct Resources {
+        spi: PC13<Output<PushPull>>,
+        data: [u8; (64 * 8 * 3) + 1],
+        timer_handler: CountDownTimer<pac::TIM1>,
+    }
+    // static mut SPI_DEVICE: PC13<Output<PushPull>> = ();
+    // static mut TIMER_HANDLER: CountDownTimer<pac::TIM1> = ();
+    // static mut DATA: [u8; (64 * 8 * 3) + 1] = [OFF_BYTE; (64 * 8 * 3) + 1];
 
-    // Take ownership over the raw flash and rcc devices and convert them into the corresponding
-    // HAL structs
-    let mut flash = dp.FLASH.constrain();
-    let mut rcc = dp.RCC.constrain();
+    #[init]
+    fn init(cx: init::Context) -> init::LateResources {
+        // Take ownership over the raw flash and rcc devices and convert them into the corresponding
+        // HAL structs
+        let mut flash = cx.device.FLASH.constrain();
+        let mut rcc = cx.device.RCC.constrain();
 
-    let clocks = rcc
-        .cfgr
-        .use_hse(8.mhz())
-        .sysclk(72.mhz())
-        .pclk1(36.mhz())
-        .freeze(&mut flash.acr);
+        // Freeze the configuration of all the clocks in the system and store the frozen frequencies
+        // in `clocks`
+        let clocks = rcc.cfgr.freeze(&mut flash.acr);
 
-    // Acquire the GPIOA peripheral
-    let mut gpiob = dp.GPIOB.split(&mut rcc.apb2);
+        // Acquire the GPIOC peripheral
+        let mut gpioc = cx.device.GPIOC.split(&mut rcc.apb2);
 
-    let sck = gpiob.pb13.into_alternate_push_pull(&mut gpiob.crh);
-    let miso = gpiob.pb14;
-    let mosi = gpiob.pb15.into_alternate_push_pull(&mut gpiob.crh);
+        // Configure gpio C pin 13 as a push-pull output. The `crh` register is passed to the
+        // function in order to configure the port. For pins 0-7, crl should be passed instead
+        let led = gpioc
+            .pc13
+            .into_push_pull_output_with_state(&mut gpioc.crh, State::High);
+        // Configure the syst timer to trigger an update every second and enables interrupt
+        let mut timer =
+            Timer::tim1(cx.device.TIM1, &clocks, &mut rcc.apb2).start_count_down(1.hz());
+        timer.listen(Event::Update);
 
-    let spi_mode = Mode {
-        polarity: Polarity::IdleHigh,
-        phase: Phase::CaptureOnFirstTransition,
-    };
-    let mut spi = Spi::spi2(
-        dp.SPI2,
-        (sck, miso, mosi),
-        spi_mode,
-        // 4x
-        // Uses a divisor of 16 to get an actual frequency of 2_225_000 which is 3.85% off this
-        // value. See `freq-calc.xlsx`.
-        // 2_340_000.hz(),
-
-        // 8x (1 byte per bit value)
-        // Uses a divisor of 8 to get an actual frequency of 4_500_000 which is -3.85% off this
-        // value. See `freq-calc.xlsx`.
-        4_680_000.hz(),
-        clocks,
-        &mut rcc.apb1,
-    );
-
-    // Set up the DMA device
-    let dma = dp.DMA1.split(&mut rcc.ahb);
-
-    // Connect the SPI device to the DMA
-    let spi_dma = spi.with_tx_dma(dma.5);
-
-    // 64 LEDs, 8 bits per LED plus one final stop bit to set the line low
-    static mut DATA: [u8; (64 * 8 * 3) + 1] = [OFF_BYTE; (64 * 8 * 3) + 1];
-
-    unsafe {
-        // All LEDs dim red
-        for i in (0..64) {
-            DATA[i * 8 * 3 + 7] = ON_BYTE;
+        // Init the static resources to use them later through RTFM
+        init::LateResources {
+            spi: led,
+            data: [OFF_BYTE; (64 * 8 * 3) + 1],
+            timer_handler: timer,
         }
+    }
 
-        DATA[DATA.len() - 1] = 0x00;
+    #[idle]
+    fn idle(cx: idle::Context) -> ! {
+        loop {
+            // Waits for interrupt
+            wfi();
+        }
+    }
 
-        let transfer = spi_dma.write(&DATA);
-        let (_spi_dma, _buffer) = transfer.wait();
-    };
+    #[task(binds = TIM1_UP, resources = [spi, data, timer_handler])]
+    fn tick(cx: tick::Context) {
+        cx.resources.spi.toggle();
 
-    let mut delay = Delay::new(cp.SYST, clocks);
-
-    loop {}
-}
+        // Clears the update flag
+        cx.resources.timer_handler.clear_update_interrupt_flag();
+    }
+};
