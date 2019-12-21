@@ -66,24 +66,19 @@ fn main() -> ! {
     let spi_dma = spi.with_tx_dma(dma.5);
 
     // 64 LEDs, 8 bits per LED plus one final stop bit to set the line low
-    let data: [u8; (64 * 8 * 3) + 1] = [OFF_BYTE; (64 * 8 * 3) + 1];
-    // data[data.len() - 1] = 0x00;
+    static mut DATA: [u8; (64 * 8 * 3) + 1] = [OFF_BYTE; (64 * 8 * 3) + 1];
 
-    // All LEDs dim red
-    // for i in (0..64) {
-    //     data[i * 8 * 3 + 8] = ON_BYTE;
-    // }
+    unsafe {
+        // All LEDs dim red
+        for i in (0..64) {
+            DATA[i * 8 * 3 + 7] = ON_BYTE;
+        }
 
-    // Start a DMA transfer
-    // let transfer = spi_dma.write(&[
-    //     OFF_BYTE, OFF_BYTE, OFF_BYTE, OFF_BYTE, OFF_BYTE, OFF_BYTE, OFF_BYTE, ON_BYTE, //
-    //     OFF_BYTE, OFF_BYTE, OFF_BYTE, OFF_BYTE, OFF_BYTE, OFF_BYTE, OFF_BYTE, OFF_BYTE, //
-    //     OFF_BYTE, OFF_BYTE, OFF_BYTE, OFF_BYTE, OFF_BYTE, OFF_BYTE, OFF_BYTE, OFF_BYTE, //
-    //     0x00,
-    // ]);
+        DATA[DATA.len() - 1] = 0x00;
 
-    let transfer = spi_dma.write(&data);
-    let (_spi_dma, _buffer) = transfer.wait();
+        let transfer = spi_dma.write(&DATA);
+        let (_spi_dma, _buffer) = transfer.wait();
+    };
 
     let mut delay = Delay::new(cp.SYST, clocks);
 
