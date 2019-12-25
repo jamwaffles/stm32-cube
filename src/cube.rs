@@ -138,6 +138,14 @@ impl Cube4 {
         use core::sync::atomic::{self, Ordering};
         use stm32f1xx_hal::dma::TransferPayload;
 
+        for (led_idx, light) in self.cube_frame.iter().enumerate() {
+            let start = led_idx * (8 * 3);
+            //
+            for (byte_idx, bit) in colour_to_raw(&light).iter().enumerate() {
+                unsafe { DATA[start + byte_idx] = *bit }
+            }
+        }
+
         // let mut spi_dma: &mut DmaInterface = cx.resources.spi_dma;
 
         unsafe {
