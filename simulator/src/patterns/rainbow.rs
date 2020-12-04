@@ -17,7 +17,7 @@ impl PatternUpdate for Rainbow {
     type CycleCounter = u32;
     // type Iter = RainbowIter;
 
-    fn pixel_at(&self, idx: usize, time: u32, _frame_delta: u32) -> Apa106Led {
+    fn pixel_at(&mut self, idx: usize, time: u32, _frame_delta: u32) -> Apa106Led {
         let step = idx as f32 / 64.0;
         let offset = step * PI;
 

@@ -110,17 +110,13 @@ fn update(time: u32, state: &mut State, cube: &mut Cube) {
             let frame_delta = state.frame_delta;
             let update_iter = transition.next_pattern.update_iter(time, state.frame_delta);
 
-            cube.frame_mut()
-                .iter_mut()
-                .zip(update_iter)
-                .for_each(|(current, next)| {
-                    let new =
-                        transition
-                            .transition
-                            .transition_pixel(time, frame_delta, *current, next);
+            for (current, next) in cube.frame_mut().iter_mut().zip(update_iter) {
+                let new = transition
+                    .transition
+                    .transition_pixel(time, frame_delta, *current, next);
 
-                    *current = new;
-                });
+                *current = new;
+            }
         } else {
             state.pattern = transition.next_pattern.clone();
             state.current_start = time;

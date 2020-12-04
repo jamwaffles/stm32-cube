@@ -13,7 +13,7 @@ pub enum Pattern {
 }
 
 impl Pattern {
-    pub fn update_iter<'a>(&'a self, time: u32, frame_delta: u32) -> PatternIter<'a> {
+    pub fn update_iter<'a>(&'a mut self, time: u32, frame_delta: u32) -> PatternIter<'a> {
         PatternIter {
             pattern: self,
             idx: 0,
@@ -26,7 +26,7 @@ impl Pattern {
 pub trait PatternUpdate {
     type CycleCounter;
 
-    fn pixel_at(&self, idx: usize, time: u32, frame_delta: u32) -> Apa106Led;
+    fn pixel_at(&mut self, idx: usize, time: u32, frame_delta: u32) -> Apa106Led;
 
     // type Iter: Iterator;
 
@@ -39,7 +39,7 @@ pub trait PatternUpdate {
 }
 
 pub struct PatternIter<'a> {
-    pattern: &'a Pattern,
+    pattern: &'a mut Pattern,
     idx: usize,
     time: u32,
     frame_delta: u32,

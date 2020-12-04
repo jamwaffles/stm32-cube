@@ -16,7 +16,7 @@ impl PatternUpdate for Police {
     type CycleCounter = u32;
     // type Iter = PoliceIter;
 
-    fn pixel_at(&self, _idx: usize, time: u32, _frame_delta: u32) -> Apa106Led {
+    fn pixel_at(&mut self, _idx: usize, time: u32, _frame_delta: u32) -> Apa106Led {
         let is_red = (time % self.speed) < self.speed / 2;
 
         if is_red {
