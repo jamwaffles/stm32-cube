@@ -6,6 +6,21 @@ Power the cube's +5v from a different supply - the Blue Pill/USB can't handle it
 
 Connect the data cable (USB green) to B15. Job done.
 
+## Running firmware
+
+Make sure OpenOCD is running, e.g.
+
+```bash
+openocd -f interface/stlink.cfg -f target/stm32f1x.cfg
+```
+
+then:
+
+```bash
+cd firmware
+cargo run --release
+```
+
 ## APA106 timing
 
 The APA106 is similar to the WS2812 in that is uses a single wire, timing-based bus to operate, however the timings are slightly different. Cycle time is 1.71us per bit, and a 1 or 0 is dictated by the duty cycle as below:
