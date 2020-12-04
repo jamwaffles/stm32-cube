@@ -81,25 +81,135 @@ fn scale(i: f32) -> u8 {
     ((i + 1.0) * 127.0) as u8
 }
 
-fn update(time: u32, cube: &mut Cube) {
-    for (idx, _) in cube.frame().iter().enumerate() {
-        let step = idx as f32 / 64.0;
-        let offset = step * PI;
+trait PatternUpdate {
+    type CycleCounter;
 
-        // 1 second cycle time
-        let t = time as f32 / (1000.0 / PI);
+    fn update(&mut self, time: u32, frame_delta: u32, cube: &mut Cube);
 
-        let r = scale((t + offset).sin());
-        let g = scale((t + offset + ((2.0 * PI) / 3.0)).sin());
-        let b = scale((t + offset + ((4.0 * PI) / 3.0)).sin());
+    /// Get number of complete cycles this pattern will have run at a certain time.
+    ///
+    /// If the number is not known or cannot be computed, `None` should be returned.
+    fn completed_cycles(&self, time: u32) -> Self::CycleCounter;
+}
 
-        let colour = Apa106Led {
-            red: r,
-            green: g,
-            blue: b,
-        };
+struct Rainbow {
+    duration: u32,
+}
 
-        cube.set_at_index(idx, colour);
+impl Default for Rainbow {
+    fn default() -> Self {
+        Self { duration: 1000 }
+    }
+}
+
+impl PatternUpdate for Rainbow {
+    type CycleCounter = u32;
+
+    fn update(&mut self, time: u32, frame_delta: u32, cube: &mut Cube) {
+        for (idx, _) in cube.frame().iter().enumerate() {
+            let step = idx as f32 / 64.0;
+            let offset = step * PI;
+
+            // 1 second cycle time
+            let t = time as f32 / (self.duration as f32 / PI);
+
+            let r = scale((t + offset).sin());
+            let g = scale((t + offset + ((2.0 * PI) / 3.0)).sin());
+            let b = scale((t + offset + ((4.0 * PI) / 3.0)).sin());
+
+            let colour = Apa106Led {
+                red: r,
+                green: g,
+                blue: b,
+            };
+
+            cube.set_at_index(idx, colour);
+        }
+    }
+
+    fn completed_cycles(&self, time: u32) -> Self::CycleCounter {
+        time / self.duration
+    }
+}
+
+struct Police {
+    is_red: bool,
+    speed: u32,
+    counter: u32,
+}
+
+impl Default for Police {
+    fn default() -> Self {
+        Self {
+            is_red: true,
+            speed: 300,
+            counter: 0,
+        }
+    }
+}
+
+impl PatternUpdate for Police {
+    type CycleCounter = u32;
+
+    fn update(&mut self, _time: u32, frame_delta: u32, cube: &mut Cube) {
+        cube.fill(if self.is_red {
+            Apa106Led {
+                red: 255,
+                green: 0,
+                blue: 0,
+            }
+        } else {
+            Apa106Led {
+                red: 0,
+                green: 0,
+                blue: 255,
+            }
+        });
+
+        self.counter += frame_delta;
+
+        if self.counter > self.speed {
+            self.counter = 0;
+            self.is_red = !self.is_red;
+        }
+    }
+
+    fn completed_cycles(&self, time: u32) -> Self::CycleCounter {
+        // Red/blue counts as one cycle
+        time / (self.speed * 2)
+    }
+}
+
+enum Pattern {
+    Rainbow(Rainbow),
+    Police(Police),
+}
+
+enum Transition {
+    FadeOut { duration: u32 },
+}
+
+struct State {
+    current_start: u32,
+    pattern: Pattern,
+    frame_delta: u32,
+}
+
+fn update(time: u32, state: &mut State, cube: &mut Cube) {
+    match state.pattern {
+        Pattern::Rainbow(ref mut rainbow) => {
+            let delta = time - state.current_start;
+
+            rainbow.update(time, state.frame_delta, cube);
+
+            if rainbow.completed_cycles(delta) > 5 {
+                state.current_start = time;
+                state.pattern = Pattern::Police(Police::default())
+            }
+        }
+        Pattern::Police(ref mut police) => {
+            police.update(time, state.frame_delta, cube);
+        }
     }
 }
 
@@ -112,9 +222,16 @@ fn main() -> Result<(), core::convert::Infallible> {
 
     let start = Instant::now();
 
+    let mut state = State {
+        pattern: Pattern::Rainbow(Rainbow::default()),
+        current_start: 0,
+        frame_delta: 0,
+    };
     let mut cube = Cube::new();
 
-    update(0, &mut cube);
+    let mut prev_time = 0;
+
+    update(0, &mut state, &mut cube);
     draw(&mut display, 0, &mut cube)?;
 
     'running: loop {
@@ -150,7 +267,11 @@ fn main() -> Result<(), core::convert::Infallible> {
 
         let time = start.elapsed().as_millis();
 
-        update(time as u32, &mut cube);
+        state.frame_delta = time as u32 - prev_time;
+
+        prev_time = time as u32;
+
+        update(time as u32, &mut state, &mut cube);
         draw(&mut display, time as u32, &mut cube)?;
     }
 
