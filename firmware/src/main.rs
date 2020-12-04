@@ -1,17 +1,15 @@
 #![no_std]
 #![no_main]
 
-mod apa106led;
-mod colour_functions;
 mod cube;
 mod embedded_rand;
 mod patterns;
 
-use crate::{
+use crate::{flush, patterns::MAX_BRIGHTNESS};
+use common::{
     apa106led::{Apa106Led, WARM_WHITE},
     colour_functions::fade,
-    cube::Cube4,
-    patterns::MAX_BRIGHTNESS,
+    cube::Cube,
 };
 use core::ptr;
 use cortex_m::{asm::wfi, singleton};
@@ -54,7 +52,7 @@ const APP: () = {
         led: PC13<Output<PushPull>>,
         spi_dma: &'static mut DmaInterface,
         timer_handler: CountDownTimer<pac::TIM1>,
-        cube: Cube4,
+        cube: Cube,
         delay: Delay,
         // timer2_handler: CountDownTimer<pac::TIM2>,
         // buf: &'static mut [u8; DATA_LEN],
@@ -139,7 +137,7 @@ const APP: () = {
         // let buf = singleton!(: [u8; DATA_LEN] = [OFF_BYTE; DATA_LEN]).unwrap();
         // unsafe { DATA[DATA.len() - 1] = 0x00 };
 
-        let mut cube = Cube4::new();
+        let mut cube = Cube::new();
 
         cube.fill(Apa106Led {
             red: 2,

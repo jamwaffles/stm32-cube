@@ -1,9 +1,11 @@
 use crate::{
-    apa106led::{Apa106Led, OFF, WARM_WHITE},
-    colour_functions::{christmas_wheel, fade},
     cube::{Cube4, Voxel},
     embedded_rand::rand_range,
     DmaInterface,
+};
+use common::{
+    apa106led::{Apa106Led, OFF},
+    colour_functions::{christmas_wheel, fade},
 };
 use stm32f1xx_hal::{delay::Delay, prelude::*};
 

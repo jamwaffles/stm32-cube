@@ -58,6 +58,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "common"
+version = "0.1.0"
+
+[[package]]
 name = "cortex-m"
 version = "0.6.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -301,6 +305,7 @@ name = "stm32-cube"
 version = "0.1.0"
 dependencies = [
  "as-slice",
+ "common",
  "cortex-m",
  "cortex-m-rt",
  "cortex-m-rtfm",

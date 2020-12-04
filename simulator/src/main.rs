@@ -9,12 +9,16 @@
 extern crate embedded_graphics;
 extern crate embedded_graphics_simulator;
 
+use std::time::Instant;
+
+use common::{apa106led::Apa106Led, cube::Cube};
 use embedded_graphics::{
     fonts::{Font6x8, Text},
     pixelcolor::Rgb888,
     prelude::*,
     primitives::Line,
-    primitives::{common::LineJoin, common::StrokeOffset, line::Intersection, Polyline},
+    primitives::{common::LineJoin, common::StrokeOffset, line::Intersection, Circle, Polyline},
+    style::PrimitiveStyleBuilder,
     style::{MonoTextStyle, PrimitiveStyle},
 };
 use embedded_graphics_simulator::{
@@ -22,69 +26,119 @@ use embedded_graphics_simulator::{
 };
 use sdl2::keyboard::Keycode;
 
-fn draw_layer(display: &mut SimulatorDisplay<Rgb888>) -> Result<(), core::convert::Infallible> {
-    //
+const SIZE: i32 = 15;
+const SPACING: i32 = 5;
+
+fn draw_layer(
+    pixels: &[Rgb888],
+    display: &mut impl DrawTarget<Error = core::convert::Infallible, Color = Rgb888>,
+) -> Result<(), core::convert::Infallible> {
+    for (idx, p) in pixels.iter().enumerate() {
+        let x = (idx % 4) as i32 * (SIZE + SPACING);
+        let y = (idx / 4) as i32 * (SIZE + SPACING);
+
+        Circle::new(Point::new(x, y), SIZE as u32)
+            .into_styled(
+                PrimitiveStyleBuilder::new()
+                    .stroke_width(1)
+                    .stroke_color(Rgb888::CSS_DARK_GRAY)
+                    .fill_color(*p)
+                    .build(),
+            )
+            .draw(display)?;
+    }
 
     Ok(())
 }
 
 fn draw(
     display: &mut SimulatorDisplay<Rgb888>,
-    position: Point,
-    stroke_width: u32,
+    _time: u32,
+    cube: &mut Cube,
 ) -> Result<(), core::convert::Infallible> {
-    display.clear(Rgb888::CSS_DARK_GRAY)?;
+    display.clear(Rgb888::BLACK)?;
 
-    //
+    for (idx, layer) in cube.frame().chunks(16).enumerate() {
+        let colours = layer
+            .iter()
+            .map(|led| Rgb888::new(led.red, led.green, led.blue))
+            .collect::<Vec<_>>();
+
+        draw_layer(
+            &colours,
+            &mut display.translated(Point::new(
+                idx as i32 * ((SIZE + SPACING) * 4 + SPACING * 2) + 10,
+                10,
+            )),
+        )?;
+    }
 
     Ok(())
 }
 
+fn update(time: u32, cube: &mut Cube) {
+    let brightness = (time as f32 / 100.0).sin() + 1.0;
+
+    let brightness = (brightness * 127.0) as u8;
+
+    let colour = Apa106Led {
+        red: brightness,
+        green: brightness,
+        blue: brightness,
+    };
+
+    cube.fill(colour);
+}
+
 fn main() -> Result<(), core::convert::Infallible> {
-    let mut display: SimulatorDisplay<Rgb888> = SimulatorDisplay::new(Size::new(700, 200));
+    let mut display: SimulatorDisplay<Rgb888> = SimulatorDisplay::new(Size::new(400, 120));
     let output_settings = OutputSettingsBuilder::new()
-        .scale(2)
         // .pixel_spacing(1)
         .build();
     let mut window = Window::new("Cube sim", &output_settings);
 
-    let mut position = Point::new(29, 30);
-    let mut stroke_width = 5;
-    let mut mouse_down = false;
+    let start = Instant::now();
 
-    draw(&mut display, position, stroke_width)?;
+    let mut cube = Cube::new();
+
+    update(0, &mut cube);
+    draw(&mut display, 0, &mut cube)?;
 
     'running: loop {
         window.update(&display);
 
         for event in window.events() {
+            #[allow(clippy::single_match)]
             match event {
                 SimulatorEvent::Quit => break 'running,
-                SimulatorEvent::KeyDown { keycode, .. } => {
-                    match keycode {
-                        Keycode::Up => stroke_width += 1,
-                        Keycode::Down => stroke_width = (stroke_width as i32 - 1).max(0) as u32,
-                        _ => (),
-                    }
+                // SimulatorEvent::KeyDown { keycode, .. } => match keycode {
+                //     Keycode::Up => time += 1,
+                //     Keycode::Down => time = time.saturating_sub(1),
+                //     _ => (),
+                // },
+                //     draw(&mut display, time, &mut cube)?;
+                // }
+                // SimulatorEvent::MouseButtonDown { point, .. } => {
+                //     mouse_down = true;
+                //     position = point;
 
-                    draw(&mut display, position, stroke_width)?;
-                }
-                SimulatorEvent::MouseButtonDown { point, .. } => {
-                    mouse_down = true;
-                    position = point;
-
-                    draw(&mut display, position, stroke_width)?;
-                }
-                SimulatorEvent::MouseButtonUp { .. } => mouse_down = false,
-                SimulatorEvent::MouseMove { point, .. } => {
-                    if mouse_down {
-                        position = point;
-                        draw(&mut display, position, stroke_width)?;
-                    }
-                }
+                //     draw(&mut display, time, &mut cube)?;
+                // }
+                // SimulatorEvent::MouseButtonUp { .. } => mouse_down = false,
+                // SimulatorEvent::MouseMove { point, .. } => {
+                //     if mouse_down {
+                //         position = point;
+                //         draw(&mut display, time, &mut cube)?;
+                //     }
+                // }
                 _ => {}
             }
         }
+
+        let time = start.elapsed().as_millis();
+
+        update(time as u32, &mut cube);
+        draw(&mut display, time as u32, &mut cube)?;
     }
 
     Ok(())
