@@ -15,7 +15,5 @@ as-slice = "0.1.2"
 cortex-m-rtfm = "0.5.0"
 
 [dependencies.stm32f1xx-hal]
-# version = "0.5.2"
-# Use version of HAL with hacked as-slice dependency to get 1537 item array working
-path = "../stm32f1xx-hal"
+version = "0.6.0"# Use version of HAL with hacked as-slice dependency to get 1537 item array working
 features = [ "stm32f103", "rt" ]

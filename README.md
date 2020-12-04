@@ -1,5 +1,11 @@
 # Blue Pill Cube
 
+## Wiring
+
+Power the cube's +5v from a different supply - the Blue Pill/USB can't handle it.
+
+Connect the data cable (USB green) to B15. Job done.
+
 ## APA106 timing
 
 The APA106 is similar to the WS2812 in that is uses a single wire, timing-based bus to operate, however the timings are slightly different. Cycle time is 1.71us per bit, and a 1 or 0 is dictated by the duty cycle as below:
