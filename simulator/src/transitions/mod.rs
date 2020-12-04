@@ -1,10 +1,13 @@
+mod cross_fade;
 mod fade_to_black;
 
-use common::{apa106led::Apa106Led, cube::Cube};
+use common::apa106led::Apa106Led;
+pub use cross_fade::*;
 pub use fade_to_black::*;
 
 pub enum Transition {
     FadeToBlack(FadeToBlack),
+    CrossFade(CrossFade),
 }
 
 impl TransitionUpdate for Transition {
@@ -17,12 +20,14 @@ impl TransitionUpdate for Transition {
     ) -> Apa106Led {
         match self {
             Self::FadeToBlack(t) => t.transition_pixel(time, frame_delta, current, next),
+            Self::CrossFade(t) => t.transition_pixel(time, frame_delta, current, next),
         }
     }
 
     fn is_complete(&self, time: u32) -> bool {
         match self {
             Self::FadeToBlack(t) => t.is_complete(time),
+            Self::CrossFade(t) => t.is_complete(time),
         }
     }
 }

@@ -141,7 +141,11 @@ fn update(time: u32, state: &mut State, cube: &mut Cube) {
             }
             Pattern::Police(ref mut police) => {
                 if police.completed_cycles(delta) > 5 {
-                    state.next_pattern(time, Pattern::Rainbow(Rainbow::default()), None);
+                    state.next_pattern(
+                        time,
+                        Pattern::Rainbow(Rainbow::default()),
+                        Some(Transition::CrossFade(CrossFade::default())),
+                    );
                 }
             }
         }
