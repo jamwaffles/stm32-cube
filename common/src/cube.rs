@@ -1,11 +1,4 @@
-use crate::apa106led::Apa106Led;
-
-#[derive(Copy, Clone)]
-pub struct Voxel {
-    pub x: u8,
-    pub y: u8,
-    pub z: u8,
-}
+use crate::{apa106led::Apa106Led, voxel::Voxel};
 
 pub struct Cube {
     frame: [Apa106Led; 64],
@@ -22,29 +15,12 @@ impl Cube {
         Cube { frame: blank_frame }
     }
 
-    fn coord_to_index(&self, coord: Voxel) -> usize {
-        let index = match coord.z {
-            0 | 2 => match coord.y {
-                0 | 2 => (4 * coord.y) + coord.x,
-                1 | 3 => (4 * coord.y) + 3 - coord.x,
-                _ => 64,
-            },
-            1 | 3 => match coord.y {
-                0 => 15 - coord.x,
-                2 => 7 - coord.x,
-                1 => coord.x + 7 + coord.y,
-                3 => coord.x + 3 - coord.y,
-                _ => 64,
-            },
-            _ => 64,
-        };
-
-        // Z coord is easy, just offset n * (num voxels in layer)
-        (index + (coord.z * 16)) as usize
+    pub fn frame(&self) -> &[Apa106Led; 64] {
+        &self.frame
     }
 
-    pub fn frame(&self) -> [Apa106Led; 64] {
-        self.frame
+    pub fn frame_mut(&mut self) -> &mut [Apa106Led; 64] {
+        &mut self.frame
     }
 
     pub fn set_at_index(&mut self, index: usize, colour: Apa106Led) {
@@ -52,13 +28,13 @@ impl Cube {
     }
 
     pub fn set_at_coord(&mut self, coord: Voxel, colour: Apa106Led) {
-        let idx = self.coord_to_index(coord);
+        let idx = coord.into_index();
 
         self.frame[idx] = colour;
     }
 
     pub fn get_at_coord(&self, coord: Voxel) -> Apa106Led {
-        let idx = self.coord_to_index(coord);
+        let idx = coord.into_index();
 
         self.frame[idx]
     }
@@ -101,6 +77,16 @@ impl Cube {
                 },
                 fill_colour,
             );
+        }
+    }
+
+    /// Fill by index with a pixel iterator.
+    ///
+    /// The iterator should return 64 items to fill the cube. Any items produced after 64 will be
+    /// ignored. Shorter iterators will not fail, but will leave the cube in a broken state.
+    pub fn fill_iter(&mut self, iter: impl IntoIterator<Item = Apa106Led>) {
+        for (idx, colour) in iter.into_iter().take(64).enumerate() {
+            self.set_at_index(idx, colour)
         }
     }
 }

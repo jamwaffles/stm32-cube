@@ -1,7 +1,7 @@
 pub const ON_BYTE: u8 = 0b1111_1100;
 pub const OFF_BYTE: u8 = 0b1100_0000;
 
-#[derive(Copy, Clone, Default)]
+#[derive(Copy, Clone, Default, PartialEq, Debug)]
 pub struct Apa106Led {
     pub red: u8,
     pub green: u8,

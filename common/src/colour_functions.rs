@@ -107,11 +107,49 @@ pub fn christmas_wheel(wheelpos: u8) -> Apa106Led {
 // }
 
 pub fn fade(colour: Apa106Led, multiplier: f32) -> Apa106Led {
-    let divisor: u8 = (1.0 / multiplier) as u8;
-
     Apa106Led {
-        red: (colour.red / divisor) as u8,
-        green: (colour.green / divisor) as u8,
-        blue: (colour.blue / divisor) as u8,
+        red: (colour.red as f32 * multiplier) as u8,
+        green: (colour.green as f32 * multiplier) as u8,
+        blue: (colour.blue as f32 * multiplier) as u8,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn fade_full() {
+        assert_eq!(
+            fade(
+                Apa106Led {
+                    red: 255,
+                    green: 255,
+                    blue: 255
+                },
+                0.0
+            ),
+            Apa106Led {
+                red: 0,
+                green: 0,
+                blue: 0
+            }
+        );
+
+        assert_eq!(
+            fade(
+                Apa106Led {
+                    red: 255,
+                    green: 255,
+                    blue: 255
+                },
+                1.0
+            ),
+            Apa106Led {
+                red: 255,
+                green: 255,
+                blue: 255
+            }
+        );
     }
 }

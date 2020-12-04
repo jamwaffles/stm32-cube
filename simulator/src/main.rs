@@ -1,14 +1,7 @@
-//! A debugging tool for thick lines
-//!
-//! Use the up/down arrow keys to increase or decrease the line thickness. Click and drag to move
-//! the end point of the line around.
-//!
-//! The thickness, DX and DY components of the line are displayed in the top right corner of the
-//! window.
-
 mod patterns;
+mod transitions;
 
-use crate::patterns::*;
+use crate::{patterns::*, transitions::*};
 use common::{apa106led::Apa106Led, cube::Cube};
 use core::f32::consts::PI;
 use embedded_graphics::{
@@ -76,30 +69,77 @@ fn draw(
     Ok(())
 }
 
-enum Transition {
-    FadeOut { duration: u32 },
+struct TransitionStuff {
+    transition: Transition,
+    next_pattern: Pattern,
+    transition_start: u32,
 }
 
 struct State {
     current_start: u32,
     pattern: Pattern,
     frame_delta: u32,
+    transition: Option<TransitionStuff>,
+}
+
+impl State {
+    fn next_pattern(&mut self, time: u32, new_pattern: Pattern, transition: Option<Transition>) {
+        if let Some(transition) = transition {
+            self.transition = Some(TransitionStuff {
+                transition,
+                transition_start: time,
+                next_pattern: new_pattern,
+            });
+        } else {
+            self.current_start = time;
+            self.transition = None;
+            self.pattern = new_pattern;
+        }
+    }
 }
 
 fn update(time: u32, state: &mut State, cube: &mut Cube) {
-    match state.pattern {
-        Pattern::Rainbow(ref mut rainbow) => {
-            let delta = time - state.current_start;
+    let delta = time - state.current_start;
 
-            rainbow.update(time, state.frame_delta, cube);
+    cube.fill_iter(state.pattern.update_iter(time, state.frame_delta));
 
-            if rainbow.completed_cycles(delta) > 5 {
-                state.current_start = time;
-                state.pattern = Pattern::Police(Police::default())
-            }
+    if let Some(ref mut transition) = state.transition {
+        let transition_delta = time - transition.transition_start;
+        let frame_delta = state.frame_delta;
+        let update_iter = transition.next_pattern.update_iter(time, state.frame_delta);
+
+        cube.frame_mut()
+            .iter_mut()
+            .zip(update_iter)
+            .for_each(|(current, next)| {
+                let new = transition
+                    .transition
+                    .transition_pixel(time, frame_delta, *current, next);
+
+                *current = new;
+            });
+
+        if transition.transition.is_complete(transition_delta) {
+            state.pattern = transition.next_pattern.clone();
+            state.current_start = time;
+            state.transition = None;
         }
-        Pattern::Police(ref mut police) => {
-            police.update(time, state.frame_delta, cube);
+    } else {
+        match state.pattern {
+            Pattern::Rainbow(ref mut rainbow) => {
+                if rainbow.completed_cycles(delta) > 5 {
+                    state.next_pattern(
+                        time,
+                        Pattern::Police(Police::default()),
+                        Some(Transition::FadeToBlack(FadeToBlack::default())),
+                    );
+                }
+            }
+            Pattern::Police(ref mut police) => {
+                if police.completed_cycles(delta) > 5 {
+                    state.next_pattern(time, Pattern::Rainbow(Rainbow::default()), None);
+                }
+            }
         }
     }
 }
@@ -115,6 +155,7 @@ fn main() -> Result<(), core::convert::Infallible> {
 
     let mut state = State {
         pattern: Pattern::Rainbow(Rainbow::default()),
+        transition: None,
         current_start: 0,
         frame_delta: 0,
     };
