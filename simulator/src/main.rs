@@ -105,24 +105,28 @@ fn update(time: u32, state: &mut State, cube: &mut Cube) {
 
     if let Some(ref mut transition) = state.transition {
         let transition_delta = time - transition.transition_start;
-        let frame_delta = state.frame_delta;
-        let update_iter = transition.next_pattern.update_iter(time, state.frame_delta);
 
-        cube.frame_mut()
-            .iter_mut()
-            .zip(update_iter)
-            .for_each(|(current, next)| {
-                let new = transition
-                    .transition
-                    .transition_pixel(time, frame_delta, *current, next);
+        if !transition.transition.is_complete(transition_delta) {
+            let frame_delta = state.frame_delta;
+            let update_iter = transition.next_pattern.update_iter(time, state.frame_delta);
 
-                *current = new;
-            });
+            cube.frame_mut()
+                .iter_mut()
+                .zip(update_iter)
+                .for_each(|(current, next)| {
+                    let new =
+                        transition
+                            .transition
+                            .transition_pixel(time, frame_delta, *current, next);
 
-        if transition.transition.is_complete(transition_delta) {
+                    *current = new;
+                });
+        } else {
             state.pattern = transition.next_pattern.clone();
             state.current_start = time;
             state.transition = None;
+
+            update(time, state, cube);
         }
     } else {
         match state.pattern {
