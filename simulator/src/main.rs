@@ -12,6 +12,7 @@ extern crate embedded_graphics_simulator;
 use std::time::Instant;
 
 use common::{apa106led::Apa106Led, cube::Cube};
+use core::f32::consts::PI;
 use embedded_graphics::{
     fonts::{Font6x8, Text},
     pixelcolor::Rgb888,
@@ -76,18 +77,30 @@ fn draw(
     Ok(())
 }
 
+fn scale(i: f32) -> u8 {
+    ((i + 1.0) * 127.0) as u8
+}
+
 fn update(time: u32, cube: &mut Cube) {
-    let brightness = (time as f32 / 100.0).sin() + 1.0;
+    for (idx, _) in cube.frame().iter().enumerate() {
+        let step = idx as f32 / 64.0;
+        let offset = step * PI;
 
-    let brightness = (brightness * 127.0) as u8;
+        // 1 second cycle time
+        let t = time as f32 / (1000.0 / PI);
 
-    let colour = Apa106Led {
-        red: brightness,
-        green: brightness,
-        blue: brightness,
-    };
+        let r = scale((t + offset).sin());
+        let g = scale((t + offset + ((2.0 * PI) / 3.0)).sin());
+        let b = scale((t + offset + ((4.0 * PI) / 3.0)).sin());
 
-    cube.fill(colour);
+        let colour = Apa106Led {
+            red: r,
+            green: g,
+            blue: b,
+        };
+
+        cube.set_at_index(idx, colour);
+    }
 }
 
 fn main() -> Result<(), core::convert::Infallible> {
