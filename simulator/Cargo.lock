@@ -154,7 +154,17 @@ checksum = "e78d4f1cc4ae33bbfc157ed5d5a5ef3bc29227303d595861deb238fcec4e9457"
 name = "embedded-graphics"
 version = "0.7.0-alpha.2"
 dependencies = [
- "embedded-graphics-core",
+ "embedded-graphics-core 0.1.1",
+ "float-cmp",
+ "micromath",
+]
+
+[[package]]
+name = "embedded-graphics"
+version = "0.7.0-alpha.2"
+source = "git+https://github.com/embedded-graphics/embedded-graphics#c3992bf23c56994138c9b95d6d6f314d773a0904"
+dependencies = [
+ "embedded-graphics-core 0.1.0",
  "float-cmp",
  "micromath",
 ]
@@ -162,15 +172,23 @@ dependencies = [
 [[package]]
 name = "embedded-graphics-core"
 version = "0.1.0"
+source = "git+https://github.com/embedded-graphics/embedded-graphics#c3992bf23c56994138c9b95d6d6f314d773a0904"
+dependencies = [
+ "byteorder",
+]
+
+[[package]]
+name = "embedded-graphics-core"
+version = "0.1.1"
 dependencies = [
  "byteorder",
 ]
 
 [[package]]
 name = "embedded-graphics-simulator"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
- "embedded-graphics",
+ "embedded-graphics 0.7.0-alpha.2 (git+https://github.com/embedded-graphics/embedded-graphics)",
  "image",
  "sdl2",
  "tinybmp",
@@ -557,7 +575,7 @@ name = "simulator"
 version = "0.1.0"
 dependencies = [
  "common",
- "embedded-graphics",
+ "embedded-graphics 0.7.0-alpha.2",
  "embedded-graphics-simulator",
  "sdl2",
 ]
@@ -576,16 +594,18 @@ dependencies = [
 [[package]]
 name = "tinybmp"
 version = "0.2.3"
+source = "git+https://github.com/embedded-graphics/tinybmp#78d43343ff4f8a2de4ebfa7c6fa54f07e07040fd"
 dependencies = [
- "embedded-graphics",
+ "embedded-graphics 0.7.0-alpha.2 (git+https://github.com/embedded-graphics/embedded-graphics)",
  "nom",
 ]
 
 [[package]]
 name = "tinytga"
 version = "0.3.2"
+source = "git+https://github.com/embedded-graphics/tinytga#52c9757f79506149d4dfe8948541e2155e087d46"
 dependencies = [
- "embedded-graphics",
+ "embedded-graphics 0.7.0-alpha.2 (git+https://github.com/embedded-graphics/embedded-graphics)",
  "nom",
 ]
 
