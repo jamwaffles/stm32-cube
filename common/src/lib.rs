@@ -1,6 +1,5 @@
-// #![no_std]
+#![no_std]
 
 pub mod apa106led;
-pub mod colour_functions;
 pub mod cube;
 pub mod voxel;

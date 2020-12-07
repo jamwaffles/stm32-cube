@@ -1,7 +1,16 @@
 use crate::{apa106led::Apa106Led, voxel::Voxel};
 
+#[derive(Debug, Clone, Copy)]
 pub struct Cube {
     frame: [Apa106Led; 64],
+}
+
+impl Default for Cube {
+    fn default() -> Self {
+        Self {
+            frame: [Apa106Led::default(); 64],
+        }
+    }
 }
 
 impl Cube {

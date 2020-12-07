@@ -1,5 +1,5 @@
 use crate::transitions::TransitionUpdate;
-use common::{apa106led::Apa106Led, colour_functions::fade};
+use common::apa106led::Apa106Led;
 
 pub struct CrossFade {
     duration: u32,
@@ -22,8 +22,8 @@ impl TransitionUpdate for CrossFade {
         // Take modulus of time so we can fade out an infinite number of times if necessary.
         let multiplier = (time % self.duration) as f32 / self.duration as f32;
 
-        let current = fade(current, 1.0 - multiplier);
-        let new = fade(current, multiplier);
+        let current = current.fade(1.0 - multiplier);
+        let new = current.fade(multiplier);
 
         current + new
     }

@@ -1,5 +1,5 @@
 use crate::transitions::TransitionUpdate;
-use common::{apa106led::Apa106Led, colour_functions::fade};
+use common::apa106led::Apa106Led;
 
 pub struct FadeToBlack {
     duration: u32,
@@ -22,7 +22,7 @@ impl TransitionUpdate for FadeToBlack {
         // Take modulus of time so we can fade out an infinite number of times if necessary.
         let multiplier = (time % self.duration) as f32 / self.duration as f32;
 
-        fade(current, 1.0 - multiplier)
+        current.fade(1.0 - multiplier)
     }
 
     fn is_complete(&self, time: u32) -> bool {

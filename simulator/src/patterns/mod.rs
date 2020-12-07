@@ -1,15 +1,18 @@
 mod police;
 mod rainbow;
+mod slow_rain;
 
 use common::{apa106led::Apa106Led, cube::Cube};
 use core::iter::Iterator;
 pub use police::*;
 pub use rainbow::*;
+pub use slow_rain::*;
 
 #[derive(Clone, Debug)]
 pub enum Pattern {
     Rainbow(Rainbow),
     Police(Police),
+    SlowRain(SlowRain),
 }
 
 impl Pattern {
@@ -38,6 +41,7 @@ pub trait PatternUpdate {
     fn completed_cycles(&self, time: u32) -> Self::CycleCounter;
 }
 
+/// Iterator over all voxels in a frame, used to update the cube display buffer.
 pub struct PatternIter<'a> {
     pattern: &'a mut Pattern,
     idx: usize,
@@ -56,6 +60,7 @@ impl<'a> Iterator for PatternIter<'a> {
         let pixel = match self.pattern {
             Pattern::Rainbow(p) => p.pixel_at(self.idx, self.time, self.frame_delta),
             Pattern::Police(p) => p.pixel_at(self.idx, self.time, self.frame_delta),
+            Pattern::SlowRain(p) => p.pixel_at(self.idx, self.time, self.frame_delta),
         };
 
         self.idx += 1;

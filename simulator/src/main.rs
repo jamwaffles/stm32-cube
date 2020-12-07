@@ -9,7 +9,7 @@ use embedded_graphics::{
     pixelcolor::Rgb888,
     prelude::*,
     primitives::Line,
-    primitives::{common::LineJoin, common::StrokeOffset, line::Intersection, Circle, Polyline},
+    primitives::{line::Intersection, Circle, Polyline},
     style::PrimitiveStyleBuilder,
     style::{MonoTextStyle, PrimitiveStyle},
 };
@@ -135,6 +135,16 @@ fn update(time: u32, state: &mut State, cube: &mut Cube) {
                     );
                 }
             }
+            Pattern::SlowRain(ref mut pattern) => {
+                // Uncomment to cycle patterns
+                // if pattern.completed_cycles(delta) > 5 {
+                //     state.next_pattern(
+                //         time,
+                //         Pattern::Police(Police::default()),
+                //         Some(Transition::FadeToBlack(FadeToBlack::default())),
+                //     );
+                // }
+            }
             Pattern::Police(ref mut police) => {
                 if police.completed_cycles(delta) > 5 {
                     state.next_pattern(
@@ -158,7 +168,8 @@ fn main() -> Result<(), core::convert::Infallible> {
     let start = Instant::now();
 
     let mut state = State {
-        pattern: Pattern::Rainbow(Rainbow::default()),
+        // pattern: Pattern::Rainbow(Rainbow::default()),
+        pattern: Pattern::SlowRain(SlowRain::default()),
         transition: None,
         current_start: 0,
         frame_delta: 0,
