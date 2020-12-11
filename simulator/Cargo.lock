@@ -74,6 +74,7 @@ name = "common"
 version = "0.1.0"
 dependencies = [
  "micromath",
+ "rand 0.7.3",
 ]
 
 [[package]]
@@ -632,7 +633,6 @@ dependencies = [
  "common",
  "embedded-graphics 0.7.0-alpha.2",
  "embedded-graphics-simulator",
- "rand 0.7.3",
  "sdl2",
 ]
 

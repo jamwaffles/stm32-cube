@@ -1,7 +1,7 @@
 mod cross_fade;
 mod fade_to_black;
 
-use common::apa106led::Apa106Led;
+use crate::apa106led::Apa106Led;
 pub use cross_fade::*;
 pub use fade_to_black::*;
 

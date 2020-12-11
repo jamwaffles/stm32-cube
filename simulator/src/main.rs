@@ -1,8 +1,4 @@
-mod patterns;
-mod transitions;
-
-use crate::{patterns::*, transitions::*};
-use common::{apa106led::Apa106Led, cube::Cube};
+use common::{apa106led::Apa106Led, cube::Cube, patterns::*, transitions::*};
 use core::f32::consts::PI;
 use embedded_graphics::{
     fonts::{Font6x8, Text},

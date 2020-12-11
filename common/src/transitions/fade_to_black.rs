@@ -1,5 +1,4 @@
-use crate::transitions::TransitionUpdate;
-use common::apa106led::Apa106Led;
+use crate::{apa106led::Apa106Led, transitions::TransitionUpdate};
 
 pub struct FadeToBlack {
     duration: u32,

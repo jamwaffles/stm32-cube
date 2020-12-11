@@ -8,3 +8,4 @@ edition = "2018"
 
 [dependencies]
 micromath = "1.1.0"
+rand = { version = "0.7.3", default-features = false, features = [ "small_rng" ] }

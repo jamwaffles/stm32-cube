@@ -1,5 +1,4 @@
-use crate::patterns::PatternUpdate;
-use common::{apa106led::Apa106Led, cube::Cube};
+use crate::{apa106led::Apa106Led, cube::Cube, patterns::PatternUpdate};
 
 #[derive(Clone, Debug)]
 pub struct Police {

@@ -1,10 +1,11 @@
-use crate::patterns::PatternUpdate;
-use common::{
+use crate::{
     apa106led::{Apa106Led, OFF, WARM_WHITE},
     cube::Cube,
+    patterns::PatternUpdate,
     voxel::Voxel,
 };
 use core::f32::consts::PI;
+use micromath::F32Ext;
 use rand::prelude::*;
 
 #[derive(Clone, Debug)]

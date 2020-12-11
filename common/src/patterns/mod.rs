@@ -2,7 +2,7 @@ mod police;
 mod rainbow;
 mod slow_rain;
 
-use common::{apa106led::Apa106Led, cube::Cube};
+use crate::{apa106led::Apa106Led, cube::Cube};
 use core::iter::Iterator;
 pub use police::*;
 pub use rainbow::*;

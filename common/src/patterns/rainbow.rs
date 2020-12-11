@@ -1,6 +1,6 @@
-use crate::patterns::PatternUpdate;
-use common::{apa106led::Apa106Led, cube::Cube};
+use crate::{apa106led::Apa106Led, cube::Cube, patterns::PatternUpdate};
 use core::f32::consts::PI;
+use micromath::F32Ext;
 
 #[derive(Clone, Debug)]
 pub struct Rainbow {

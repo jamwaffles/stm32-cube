@@ -11,4 +11,3 @@ embedded-graphics = { version = "=0.7.0-alpha.2", path = "../../embedded-graphic
 embedded-graphics-simulator = { version = "*", path = "../../simulator" }
 sdl2 = "0.32.2"
 common = { path = "../common" }
-rand = { version = "0.7.3", default-features = false, features = [ "small_rng" ] }
