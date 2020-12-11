@@ -1,15 +1,69 @@
-use common::{apa106led::Apa106Led, cube::Cube, patterns::*, transitions::*, voxel::Voxel};
+use common::{apa106led::Apa106Led, cube::Cube, patterns::*, transitions::*};
 use core::f32::consts::PI;
-use kiss3d::event::{Action, Key, WindowEvent};
-use kiss3d::light::Light;
-use kiss3d::post_processing::SobelEdgeHighlight;
-use kiss3d::window::Window;
-use kiss3d::{
-    camera::{ArcBall, FirstPerson},
-    scene::SceneNode,
+use embedded_graphics::{
+    fonts::{Font6x8, Text},
+    pixelcolor::Rgb888,
+    prelude::*,
+    primitives::Line,
+    primitives::{line::Intersection, Circle, Polyline},
+    style::PrimitiveStyleBuilder,
+    style::{MonoTextStyle, PrimitiveStyle},
 };
-use nalgebra::{Point3, Translation3, UnitQuaternion, Vector3};
+use embedded_graphics_simulator::{
+    OutputSettingsBuilder, SimulatorDisplay, SimulatorEvent, Window,
+};
+use sdl2::keyboard::Keycode;
 use std::time::Instant;
+
+const SIZE: i32 = 15;
+const SPACING: i32 = 5;
+
+fn draw_layer(
+    pixels: &[Rgb888],
+    display: &mut impl DrawTarget<Error = core::convert::Infallible, Color = Rgb888>,
+) -> Result<(), core::convert::Infallible> {
+    for (idx, p) in pixels.iter().enumerate() {
+        let x = (idx % 4) as i32 * (SIZE + SPACING);
+        let y = (idx / 4) as i32 * (SIZE + SPACING);
+
+        Circle::new(Point::new(x, y), SIZE as u32)
+            .into_styled(
+                PrimitiveStyleBuilder::new()
+                    .stroke_width(1)
+                    .stroke_color(Rgb888::CSS_DARK_GRAY)
+                    .fill_color(*p)
+                    .build(),
+            )
+            .draw(display)?;
+    }
+
+    Ok(())
+}
+
+fn draw(
+    display: &mut SimulatorDisplay<Rgb888>,
+    _time: u32,
+    cube: &mut Cube,
+) -> Result<(), core::convert::Infallible> {
+    display.clear(Rgb888::BLACK)?;
+
+    for (idx, layer) in cube.frame().chunks(16).enumerate() {
+        let colours = layer
+            .iter()
+            .map(|led| Rgb888::new(led.red, led.green, led.blue))
+            .collect::<Vec<_>>();
+
+        draw_layer(
+            &colours,
+            &mut display.translated(Point::new(
+                idx as i32 * ((SIZE + SPACING) * 4 + SPACING * 2) + 10,
+                10,
+            )),
+        )?;
+    }
+
+    Ok(())
+}
 
 struct TransitionStuff {
     transition: Transition,
@@ -100,43 +154,12 @@ fn update(time: u32, state: &mut State, cube: &mut Cube) {
     }
 }
 
-fn main() {
-    let eye = Point3::new(10.0f32, 10.0, 10.0);
-    let at = Point3::origin();
-    let mut arc_ball = ArcBall::new(eye, at);
-
-    let align_z_up = UnitQuaternion::from_axis_angle(&Vector3::x_axis(), PI / 2.0);
-
-    let mut window = Window::new("cube sim");
-    window.set_background_color(0.1, 0.1, 0.1);
-    window.set_light(Light::StickToCamera);
-    let mut floor = window.add_quad(7.0, 7.0, 1, 1);
-    floor.append_rotation_wrt_center(&align_z_up);
-
-    let mut cube = Cube::new();
-
-    let mut voxels = Vec::new();
-
-    let offset = -3.0 / 2.0;
-    let sphere_scale = 0.25;
-    let mut g = window.add_group();
-    g.append_rotation_wrt_center(&align_z_up);
-    g.append_translation(&Translation3::new(offset, 3.0 + sphere_scale + 0.2, offset));
-    g.set_local_scale(sphere_scale, sphere_scale, sphere_scale);
-
-    for idx in 0..64 {
-        let pos = Voxel::from_index(idx);
-
-        let x = pos.x as f32;
-        let y = pos.y as f32;
-        let z = pos.z as f32;
-
-        let mut s = g.add_sphere(1.0);
-
-        s.append_translation(&Translation3::new(x as f32, y as f32, z as f32));
-
-        voxels.push(s);
-    }
+fn main() -> Result<(), core::convert::Infallible> {
+    let mut display: SimulatorDisplay<Rgb888> = SimulatorDisplay::new(Size::new(400, 120));
+    let output_settings = OutputSettingsBuilder::new()
+        // .pixel_spacing(1)
+        .build();
+    let mut window = Window::new("Cube sim", &output_settings);
 
     let start = Instant::now();
 
@@ -147,12 +170,44 @@ fn main() {
         current_start: 0,
         frame_delta: 0,
     };
+    let mut cube = Cube::new();
 
     let mut prev_time = 0;
 
-    cube.set_at_coord(Voxel { x: 0, y: 0, z: 0 }, Apa106Led::WARM_WHITE);
+    update(0, &mut state, &mut cube);
+    draw(&mut display, 0, &mut cube)?;
 
-    while window.render_with_camera(&mut arc_ball) {
+    'running: loop {
+        window.update(&display);
+
+        for event in window.events() {
+            #[allow(clippy::single_match)]
+            match event {
+                SimulatorEvent::Quit => break 'running,
+                // SimulatorEvent::KeyDown { keycode, .. } => match keycode {
+                //     Keycode::Up => time += 1,
+                //     Keycode::Down => time = time.saturating_sub(1),
+                //     _ => (),
+                // },
+                //     draw(&mut display, time, &mut cube)?;
+                // }
+                // SimulatorEvent::MouseButtonDown { point, .. } => {
+                //     mouse_down = true;
+                //     position = point;
+
+                //     draw(&mut display, time, &mut cube)?;
+                // }
+                // SimulatorEvent::MouseButtonUp { .. } => mouse_down = false,
+                // SimulatorEvent::MouseMove { point, .. } => {
+                //     if mouse_down {
+                //         position = point;
+                //         draw(&mut display, time, &mut cube)?;
+                //     }
+                // }
+                _ => {}
+            }
+        }
+
         let time = start.elapsed().as_millis();
 
         state.frame_delta = time as u32 - prev_time;
@@ -160,14 +215,8 @@ fn main() {
         prev_time = time as u32;
 
         update(time as u32, &mut state, &mut cube);
-
-        // Update voxel colours
-        for (sphere, c) in voxels.iter_mut().zip(cube.frame().iter()) {
-            sphere.set_color(
-                c.red as f32 / 255.0,
-                c.green as f32 / 255.0,
-                c.blue as f32 / 255.0,
-            );
-        }
+        draw(&mut display, time as u32, &mut cube)?;
     }
+
+    Ok(())
 }
