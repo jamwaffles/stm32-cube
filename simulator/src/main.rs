@@ -144,7 +144,8 @@ fn main() {
     let mut state = State {
         // pattern: Pattern::Rainbow(Rainbow::default()),
         // pattern: Pattern::SlowRain(SlowRain::default()),
-        pattern: Pattern::ChristmasPuke(ChristmasPuke::default()),
+        // pattern: Pattern::ChristmasPuke(ChristmasPuke::default()),
+        pattern: Pattern::Slices(Slices::default()),
         transition: None,
         current_start: 0,
         frame_delta: 0,
