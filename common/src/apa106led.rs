@@ -61,6 +61,38 @@ impl core::ops::Add<Apa106Led> for Apa106Led {
     }
 }
 
+/// Red - green - white colour wheel.
+pub fn christmas_wheel(wheelpos: u8) -> Apa106Led {
+    let mut thingy = wheelpos;
+
+    // Ramp red down to 0, green up to 255
+    if thingy < 85 {
+        Apa106Led {
+            red: 255 - thingy * 3,
+            green: thingy * 3,
+            blue: 0,
+        }
+    } else if thingy < 170 {
+        // Ramp red and blue up, leave green at 255
+        thingy -= 85;
+
+        Apa106Led {
+            red: thingy * 3,
+            green: 255,
+            blue: thingy * 3,
+        }
+    } else {
+        // Ramp green and blue down, leave red at 255
+        thingy -= 170;
+
+        Apa106Led {
+            red: 255,
+            green: 255 - thingy * 3,
+            blue: 255 - thingy * 3,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

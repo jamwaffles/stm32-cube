@@ -1,8 +1,10 @@
+mod christmas_puke;
 mod police;
 mod rainbow;
 mod slow_rain;
 
 use crate::{apa106led::Apa106Led, cube::Cube};
+pub use christmas_puke::*;
 use core::iter::Iterator;
 pub use police::*;
 pub use rainbow::*;
@@ -13,6 +15,7 @@ pub enum Pattern {
     Rainbow(Rainbow),
     Police(Police),
     SlowRain(SlowRain),
+    ChristmasPuke(ChristmasPuke),
 }
 
 impl Pattern {
@@ -30,10 +33,6 @@ pub trait PatternUpdate {
     type CycleCounter;
 
     fn pixel_at(&mut self, idx: usize, time: u32, frame_delta: u32) -> Apa106Led;
-
-    // type Iter: Iterator;
-
-    // fn update_iter(&self, time: u32, frame_delta: u32, cube: &Cube) -> Self::Iter;
 
     /// Get number of complete cycles this pattern will have run at a certain time.
     ///
@@ -61,6 +60,7 @@ impl<'a> Iterator for PatternIter<'a> {
             Pattern::Rainbow(p) => p.pixel_at(self.idx, self.time, self.frame_delta),
             Pattern::Police(p) => p.pixel_at(self.idx, self.time, self.frame_delta),
             Pattern::SlowRain(p) => p.pixel_at(self.idx, self.time, self.frame_delta),
+            Pattern::ChristmasPuke(p) => p.pixel_at(self.idx, self.time, self.frame_delta),
         };
 
         self.idx += 1;
