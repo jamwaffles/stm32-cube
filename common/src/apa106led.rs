@@ -47,16 +47,6 @@ impl Apa106Led {
             blue: (self.blue as f32 * multiplier) as u8,
         }
     }
-
-    /// Sin interval from 0 - 2PI
-    pub fn fade_sin(self, position: f32) -> Apa106Led {
-        // Align position so pos = 0 -> output = 0
-        // let position = position - PI / 2.0;
-
-        let t = 1.0 - position.cos();
-
-        self.fade(t / 2.0)
-    }
 }
 
 impl core::ops::Add<Apa106Led> for Apa106Led {
