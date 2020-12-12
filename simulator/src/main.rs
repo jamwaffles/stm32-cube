@@ -118,11 +118,17 @@ fn main() {
 
     let mut voxels = Vec::new();
 
-    let offset = -3.0 / 2.0;
-    let sphere_scale = 0.25;
+    let sphere_scale = 0.35;
+    let cube_scale = 1.5;
     let mut g = window.add_group();
-    g.append_rotation_wrt_center(&align_z_up);
-    g.append_translation(&Translation3::new(offset, 3.0 + sphere_scale + 0.2, offset));
+
+    let cube_size = 3.0 * 1.5;
+
+    g.append_translation(&Translation3::new(
+        -cube_size / 2.0,
+        sphere_scale + 0.1,
+        -cube_size / 2.0,
+    ));
     g.set_local_scale(sphere_scale, sphere_scale, sphere_scale);
 
     for idx in 0..64 {
@@ -134,7 +140,12 @@ fn main() {
 
         let mut s = g.add_sphere(1.0);
 
-        s.append_translation(&Translation3::new(x as f32, y as f32, z as f32));
+        // NOTE: Weird ordering here as Z faces out of screen with KISS3D
+        s.append_translation(&Translation3::new(
+            x as f32 * cube_scale,
+            (3.0 - z) as f32 * cube_scale,
+            y as f32 * cube_scale,
+        ));
 
         voxels.push(s);
     }
@@ -172,5 +183,25 @@ fn main() {
                 c.blue as f32 / 255.0,
             );
         }
+
+        // Axes
+        // X - red
+        window.draw_line(
+            &Point3::origin(),
+            &Point3::new(1.0, 0.0, 0.0),
+            &Point3::new(1.0, 0.0, 0.0),
+        );
+        // Y - green
+        window.draw_line(
+            &Point3::origin(),
+            &Point3::new(0.0, 1.0, 0.0),
+            &Point3::new(0.0, 1.0, 0.0),
+        );
+        // Z - blue
+        window.draw_line(
+            &Point3::origin(),
+            &Point3::new(0.0, 0.0, 1.0),
+            &Point3::new(0.0, 0.0, 1.0),
+        );
     }
 }
