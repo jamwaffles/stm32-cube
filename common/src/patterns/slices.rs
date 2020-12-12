@@ -1,4 +1,4 @@
-use crate::{apa106led::Apa106Led, cube::Cube, patterns::PatternUpdate};
+use crate::{apa106led::Apa106Led, cube::Cube, patterns::PatternUpdate, voxel::Voxel};
 use core::f32::consts::PI;
 use micromath::F32Ext;
 
@@ -49,6 +49,7 @@ impl Direction {
 
 #[derive(Debug, Copy, Clone)]
 enum Stage {
+    Init,
     FadeIn { idx: usize },
     FadeOut,
 }
@@ -78,11 +79,11 @@ impl Default for Slices {
         let dir = Direction::Z;
 
         Self {
-            fade_time: 1000,
+            fade_time: 500,
             current_colour: dir.colour(),
             dir,
             brightnesses: [0.0f32; 4],
-            stage: Stage::FadeIn { idx: 0 },
+            stage: Stage::Init,
             threshold: 0,
         }
     }
@@ -92,36 +93,60 @@ impl PatternUpdate for Slices {
     type CycleCounter = u32;
 
     fn pixel_at(&mut self, idx: usize, time: u32, _frame_delta: u32) -> Apa106Led {
-        // dbg!(time % (self.fade_time * 2), self.fade_time);
+        let brightness = (time % self.fade_time) as f32 / self.fade_time as f32;
 
-        if time > self.threshold {
+        // Past end of current stage. Transition state to next phase.
+        if time >= self.threshold {
             self.threshold = time + self.fade_time;
 
-            // Past end of current stage. Transition state to next phase.
-            if idx == 0 && time % (self.fade_time * 2) > self.fade_time {
-                let old = self.stage;
-                self.stage = match self.stage {
-                    // Move on to next slice
-                    Stage::FadeIn { idx } if idx < 3 => Stage::FadeIn { idx: idx + 1 },
-                    // Reached end of fade in, move on to fade whole cube out
-                    Stage::FadeIn { idx: _ } => Stage::FadeOut,
-                    // Finished fading out. Reset to zero slice index, change direction
-                    Stage::FadeOut => {
-                        self.dir = self.dir.next_dir();
+            self.stage = match self.stage {
+                // Noop - all the state is set up, we're just updating `self.threshold` correctly
+                // in this iteration.
+                Stage::Init => Stage::FadeIn { idx: 0 },
+                // Move on to next slice
+                Stage::FadeIn { idx } if idx < 3 => Stage::FadeIn { idx: idx + 1 },
+                // Reached end of fade in, move on to fade whole cube out
+                Stage::FadeIn { idx: _ } => Stage::FadeOut,
+                // Finished fading out. Reset to zero slice index, change direction
+                Stage::FadeOut => {
+                    self.dir = self.dir.next_dir();
+                    self.brightnesses.iter_mut().for_each(|b| *b = 0.0);
 
-                        Stage::FadeIn { idx: 0 }
-                    }
-                };
+                    Stage::FadeIn { idx: 0 }
+                }
+            };
+        }
 
-                println!("Next phase {:?} -> {:?}, {:?}", old, self.stage, self.dir);
+        // TODO: Move to a pre-frame method
+        if idx == 0 {
+            match self.stage {
+                Stage::Init => {}
+                Stage::FadeIn { idx } => {
+                    self.brightnesses[idx] = brightness.max(self.brightnesses[idx]);
+                }
+                Stage::FadeOut => self
+                    .brightnesses
+                    .iter_mut()
+                    .for_each(|b| *b = (1.0 - brightness).min(*b)),
             }
         }
 
-        Apa106Led::OFF
+        let voxel = Voxel::from_index(idx);
+
+        // Voxel coordinate along current slice axis
+        let voxel_pos = match self.dir {
+            Direction::X => voxel.x,
+            Direction::Y => voxel.y,
+            Direction::Z => voxel.z,
+        };
+
+        let colour = self.dir.colour();
+
+        colour.fade(self.brightnesses[voxel_pos as usize])
     }
 
     fn completed_cycles(&self, time: u32) -> Self::CycleCounter {
-        // time / self.duration
-        todo!()
+        // Fade for 4 voxels per direction + fadeout time * 3 directions
+        time / (self.fade_time * 5 * 3)
     }
 }
