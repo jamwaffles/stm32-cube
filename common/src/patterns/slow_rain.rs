@@ -42,7 +42,8 @@ impl Default for SlowRain {
         mask.iter_mut().for_each(|mask| {
             let i = rng.next_u32() % 16;
 
-            *mask = if i < 4 { Mask::Visible } else { Mask::Hidden };
+            // Constant controls how many drops are present in the cube
+            *mask = if i < 8 { Mask::Visible } else { Mask::Hidden };
         });
 
         Self {
