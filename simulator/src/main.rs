@@ -111,6 +111,7 @@ fn main() {
     window.set_background_color(0.1, 0.1, 0.1);
     window.set_light(Light::StickToCamera);
     let mut floor = window.add_quad(7.0, 7.0, 1, 1);
+    floor.set_color(0.2, 0.2, 0.2);
     floor.append_rotation_wrt_center(&align_z_up);
 
     let mut cube = Cube::new();
