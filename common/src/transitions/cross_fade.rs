@@ -6,7 +6,7 @@ pub struct CrossFade {
 
 impl Default for CrossFade {
     fn default() -> Self {
-        Self { duration: 1000 }
+        Self { duration: 5000 }
     }
 }
 
@@ -22,10 +22,7 @@ impl TransitionUpdate for CrossFade {
 
         let multiplier = multiplier.min(1.0);
 
-        let current = current.fade(1.0 - multiplier);
-        let new = next.fade(multiplier);
-
-        current + new
+        current.lerp(next, multiplier)
     }
 
     fn next_start_offset(&self) -> u32 {

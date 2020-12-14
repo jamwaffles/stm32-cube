@@ -23,8 +23,8 @@ pub struct Apa106Led {
     pub blue: u8,
 }
 
-fn scale_sin(i: f32) -> f32 {
-    (i + 1.0) * 127.0
+fn lerp(a: f32, b: f32, c: f32) -> f32 {
+    (1.0 - c) * a + c * b
 }
 
 impl Apa106Led {
@@ -45,6 +45,21 @@ impl Apa106Led {
             red: (self.red as f32 * multiplier) as u8,
             green: (self.green as f32 * multiplier) as u8,
             blue: (self.blue as f32 * multiplier) as u8,
+        }
+    }
+
+    pub fn lerp(&self, other: Self, ratio: f32) -> Self {
+        let r1 = self.red as f32;
+        let g1 = self.green as f32;
+        let b1 = self.blue as f32;
+        let r2 = other.red as f32;
+        let g2 = other.green as f32;
+        let b2 = other.blue as f32;
+
+        Self {
+            red: lerp(r1, r2, ratio) as u8,
+            green: lerp(g1, g2, ratio) as u8,
+            blue: lerp(b1, b2, ratio) as u8,
         }
     }
 }
@@ -124,6 +139,34 @@ mod tests {
                 red: 255,
                 green: 255,
                 blue: 255
+            }
+        );
+    }
+
+    #[test]
+    fn lerping() {
+        let white = Apa106Led {
+            red: 255,
+            green: 255,
+            blue: 255,
+        };
+
+        let off = Apa106Led {
+            red: 0,
+            green: 0,
+            blue: 0,
+        };
+
+        assert_eq!(white.lerp(off, 0.0), white);
+
+        assert_eq!(white.lerp(off, 1.0), off);
+
+        assert_eq!(
+            white.lerp(off, 0.5),
+            Apa106Led {
+                red: 127,
+                green: 127,
+                blue: 127
             }
         );
     }

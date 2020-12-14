@@ -99,83 +99,6 @@ fn update(time: u32, state: &mut State, cube: &mut Cube) {
             state.current_start = next_start;
             state.transition = None;
         }
-
-    //     // Absolute time at which next pattern should begin
-    //     let next_pattern_start = t.driver.next_start_offset();
-
-    //     // How long this transition has been running for
-    //     let transition_run_time = time - t.start;
-
-    //     // Pause next pattern at zero until `time` reaches the next start offset
-    //     let next_pattern_time = if transition_run_time < next_pattern_start {
-    //         0
-    //     } else {
-    //         transition_run_time
-    //     };
-
-    //     if !t.driver.is_complete(transition_run_time) {
-    //         let frame_delta = state.frame_delta;
-
-    //         println!(
-    //             "Transitioning {:?}, at next pattern time {} (runtime {})",
-    //             t.driver, next_pattern_time, transition_run_time
-    //         );
-
-    //         let update_iter = t
-    //             .next_pattern
-    //             .update_iter(next_pattern_time, state.frame_delta);
-
-    //         for (current, next) in cube.frame_mut().iter_mut().zip(update_iter) {
-    //             let new = t
-    //                 .driver
-    //                 .transition_pixel(delta, frame_delta, *current, next);
-
-    //             *current = new;
-    //         }
-    //     } else {
-    //         println!(
-    //             "Transition complete in {} ms, next pat time {}, offset {}, transition duration {}",
-    //             transition_run_time,
-    //             next_pattern_time,
-    //             t.driver.next_start_offset(),
-    //             t.driver.duration(),
-    //         );
-    //         state.pattern = t.next_pattern.clone();
-    //         state.current_start = t.start
-    //             + if t.driver.next_start_offset() > 0 {
-    //                 transition_run_time
-    //             } else {
-    //                 0
-    //             };
-    //         state.transition = None;
-
-    //         // update(time, state, cube);
-    //     }
-
-    // // let transition_delta = time - transition.start;
-    // // let next_time = transition_delta.saturating_sub(transition.transition.next_start_offset());
-
-    // // if !transition.transition.is_complete(transition_delta) {
-    // //     let frame_delta = state.frame_delta;
-
-    // //     let update_iter = transition
-    // //         .next_pattern
-    // //         .update_iter(next_time, state.frame_delta);
-
-    // //     for (current, next) in cube.frame_mut().iter_mut().zip(update_iter) {
-    // //         let new = transition
-    // //             .transition
-    // //             .transition_pixel(time, frame_delta, *current, next);
-
-    // //         *current = new;
-    // //     }
-    // // } else {
-    // //     state.pattern = transition.next_pattern.clone();
-    // //     state.current_start = next_time;
-    // //     state.transition = None;
-
-    // //     update(next_time, state, cube);
-    // // }
     } else {
         cube.fill_iter(
             state
@@ -184,16 +107,17 @@ fn update(time: u32, state: &mut State, cube: &mut Cube) {
         );
 
         match state.pattern {
-            Pattern::Rainbow(_) => {
+            Pattern::Rainbow(ref mut pattern) => {
                 // Rainbow is disabled
                 // unreachable!();
 
-                // TESTING: Hijack as init state
-                state.next_pattern(
-                    time,
-                    Pattern::SlowRain(SlowRain::default()),
-                    Some(Transition::FadeFromBlack(FadeFromBlack::default())),
-                );
+                if pattern.completed_cycles(pattern_run_time) == 3 {
+                    state.next_pattern(
+                        time,
+                        Pattern::ChristmasPuke(ChristmasPuke::default()),
+                        Some(Transition::CrossFade(CrossFade::default())),
+                    );
+                }
             }
             Pattern::SlowRain(ref mut pattern) => {
                 // "cycles" doesn't mean a lot here as drops have different offsets
@@ -215,10 +139,10 @@ fn update(time: u32, state: &mut State, cube: &mut Cube) {
                 }
             }
             Pattern::ChristmasPuke(ref mut pattern) => {
-                if pattern.completed_cycles(pattern_run_time) == 2 {
+                if pattern.completed_cycles(pattern_run_time) == 3 {
                     state.next_pattern(
                         time,
-                        Pattern::Slices(Slices::default()),
+                        Pattern::Rainbow(Rainbow::default()),
                         Some(Transition::CrossFade(CrossFade::default())),
                     );
                 }
