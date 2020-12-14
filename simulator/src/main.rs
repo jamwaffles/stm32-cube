@@ -114,27 +114,27 @@ fn update(time: u32, state: &mut State, cube: &mut Cube) {
                 if pattern.completed_cycles(pattern_run_time) == 3 {
                     state.next_pattern(
                         time,
-                        Pattern::ChristmasPuke(ChristmasPuke::default()),
+                        Pattern::SlowRain(SlowRain::default()),
                         Some(Transition::CrossFade(CrossFade::default())),
                     );
                 }
             }
             Pattern::SlowRain(ref mut pattern) => {
                 // "cycles" doesn't mean a lot here as drops have different offsets
+                if pattern.completed_cycles(pattern_run_time) == 3 {
+                    state.next_pattern(
+                        time,
+                        Pattern::Slices(Slices::default()),
+                        Some(Transition::FadeToBlack(FadeToBlack::default())),
+                    );
+                }
+            }
+            Pattern::Slices(ref mut pattern) => {
                 if pattern.completed_cycles(pattern_run_time) == 2 {
                     state.next_pattern(
                         time,
                         Pattern::ChristmasPuke(ChristmasPuke::default()),
                         Some(Transition::CrossFade(CrossFade::default())),
-                    );
-                }
-            }
-            Pattern::Slices(ref mut pattern) => {
-                if pattern.completed_cycles(pattern_run_time) == 1 {
-                    state.next_pattern(
-                        time,
-                        Pattern::SlowRain(SlowRain::default()),
-                        Some(Transition::FadeFromBlack(FadeFromBlack::default())),
                     );
                 }
             }
