@@ -111,7 +111,7 @@ fn update(time: u32, state: &mut State, cube: &mut Cube) {
                 // Rainbow is disabled
                 // unreachable!();
 
-                if pattern.completed_cycles(pattern_run_time) == 3 {
+                if pattern.completed_cycles(pattern_run_time) >= 3 {
                     state.next_pattern(
                         time,
                         Pattern::SlowRain(SlowRain::default()),
