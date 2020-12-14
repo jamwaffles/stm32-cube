@@ -1,16 +1,17 @@
 use crate::{apa106led::Apa106Led, transitions::TransitionUpdate};
+
 #[derive(Debug, Copy, Clone)]
-pub struct CrossFade {
+pub struct FadeFromBlack {
     duration: u32,
 }
 
-impl Default for CrossFade {
+impl Default for FadeFromBlack {
     fn default() -> Self {
         Self { duration: 1000 }
     }
 }
 
-impl TransitionUpdate for CrossFade {
+impl TransitionUpdate for FadeFromBlack {
     fn transition_pixel(
         &self,
         time: u32,
@@ -22,10 +23,7 @@ impl TransitionUpdate for CrossFade {
 
         let multiplier = multiplier.min(1.0);
 
-        let current = current.fade(1.0 - multiplier);
-        let new = next.fade(multiplier);
-
-        current + new
+        next.fade(multiplier)
     }
 
     fn next_start_offset(&self) -> u32 {

@@ -1,5 +1,4 @@
 mod christmas_puke;
-mod police;
 mod rainbow;
 mod slices;
 mod slow_rain;
@@ -7,7 +6,6 @@ mod slow_rain;
 use crate::{apa106led::Apa106Led, cube::Cube};
 pub use christmas_puke::*;
 use core::iter::Iterator;
-pub use police::*;
 pub use rainbow::*;
 pub use slices::*;
 pub use slow_rain::*;
@@ -15,14 +13,13 @@ pub use slow_rain::*;
 #[derive(Clone, Debug)]
 pub enum Pattern {
     Rainbow(Rainbow),
-    Police(Police),
     SlowRain(SlowRain),
     ChristmasPuke(ChristmasPuke),
     Slices(Slices),
 }
 
 impl Pattern {
-    pub fn update_iter<'a>(&'a mut self, time: u32, frame_delta: u32) -> PatternIter<'a> {
+    pub fn update_iter(&'_ mut self, time: u32, frame_delta: u32) -> PatternIter<'_> {
         PatternIter {
             pattern: self,
             idx: 0,
@@ -61,7 +58,6 @@ impl<'a> Iterator for PatternIter<'a> {
 
         let pixel = match self.pattern {
             Pattern::Rainbow(p) => p.pixel_at(self.idx, self.time, self.frame_delta),
-            Pattern::Police(p) => p.pixel_at(self.idx, self.time, self.frame_delta),
             Pattern::SlowRain(p) => p.pixel_at(self.idx, self.time, self.frame_delta),
             Pattern::ChristmasPuke(p) => p.pixel_at(self.idx, self.time, self.frame_delta),
             Pattern::Slices(p) => p.pixel_at(self.idx, self.time, self.frame_delta),

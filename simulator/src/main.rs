@@ -9,12 +9,14 @@ use kiss3d::{
     scene::SceneNode,
 };
 use nalgebra::{Point3, Translation3, UnitQuaternion, Vector3};
+use sdl2::libc::RUN_LVL;
 use std::time::Instant;
 
 struct TransitionStuff {
-    transition: Transition,
+    driver: Transition,
     next_pattern: Pattern,
-    transition_start: u32,
+    start: u32,
+    next_pattern_start: u32,
 }
 
 struct State {
@@ -28,8 +30,9 @@ impl State {
     fn next_pattern(&mut self, time: u32, new_pattern: Pattern, transition: Option<Transition>) {
         if let Some(transition) = transition {
             self.transition = Some(TransitionStuff {
-                transition,
-                transition_start: time,
+                driver: transition,
+                start: time,
+                next_pattern_start: time + transition.next_start_offset(),
                 next_pattern: new_pattern,
             });
         } else {
@@ -41,62 +44,186 @@ impl State {
 }
 
 fn update(time: u32, state: &mut State, cube: &mut Cube) {
-    let delta = time - state.current_start;
+    // TODO: Move into else {}
+    let pattern_run_time = time - state.current_start;
 
-    cube.fill_iter(state.pattern.update_iter(time, state.frame_delta));
+    println!(
+        "--- Frame {} (delta {}, current start {}) ---",
+        time, pattern_run_time, state.current_start
+    );
 
-    if let Some(ref mut transition) = state.transition {
-        let transition_delta = time - transition.transition_start;
+    if let Some(t) = state.transition.as_mut() {
+        let transition_run_time = time - t.start;
 
-        if !transition.transition.is_complete(transition_delta) {
-            let frame_delta = state.frame_delta;
-            let update_iter = transition.next_pattern.update_iter(time, state.frame_delta);
+        // Next pattern starts at end of transition
+        // TODO: Make this an enum
+        let next_start = if t.driver.next_start_offset() > 0 {
+            t.start + transition_run_time
+        }
+        // Next pattern starts at the same time as the transition
+        else {
+            t.start
+        };
+
+        let next_pattern_run_time = time - next_start;
+
+        println!(
+            "D {}, Transition D {}, offset {}",
+            pattern_run_time,
+            transition_run_time,
+            t.driver.next_start_offset()
+        );
+
+        if !t.driver.is_complete(transition_run_time) {
+            let update_iter = t
+                .next_pattern
+                .update_iter(next_pattern_run_time, state.frame_delta);
 
             for (current, next) in cube.frame_mut().iter_mut().zip(update_iter) {
-                let new = transition
-                    .transition
-                    .transition_pixel(time, frame_delta, *current, next);
+                let new = t.driver.transition_pixel(
+                    transition_run_time,
+                    state.frame_delta,
+                    *current,
+                    next,
+                );
 
                 *current = new;
             }
         } else {
-            state.pattern = transition.next_pattern.clone();
-            state.current_start = time;
-            state.transition = None;
+            println!(
+                "Transition complete in {}. Next start: {}",
+                transition_run_time, next_start
+            );
 
-            update(time, state, cube);
+            state.pattern = t.next_pattern.clone();
+            state.current_start = next_start;
+            state.transition = None;
         }
+
+    //     // Absolute time at which next pattern should begin
+    //     let next_pattern_start = t.driver.next_start_offset();
+
+    //     // How long this transition has been running for
+    //     let transition_run_time = time - t.start;
+
+    //     // Pause next pattern at zero until `time` reaches the next start offset
+    //     let next_pattern_time = if transition_run_time < next_pattern_start {
+    //         0
+    //     } else {
+    //         transition_run_time
+    //     };
+
+    //     if !t.driver.is_complete(transition_run_time) {
+    //         let frame_delta = state.frame_delta;
+
+    //         println!(
+    //             "Transitioning {:?}, at next pattern time {} (runtime {})",
+    //             t.driver, next_pattern_time, transition_run_time
+    //         );
+
+    //         let update_iter = t
+    //             .next_pattern
+    //             .update_iter(next_pattern_time, state.frame_delta);
+
+    //         for (current, next) in cube.frame_mut().iter_mut().zip(update_iter) {
+    //             let new = t
+    //                 .driver
+    //                 .transition_pixel(delta, frame_delta, *current, next);
+
+    //             *current = new;
+    //         }
+    //     } else {
+    //         println!(
+    //             "Transition complete in {} ms, next pat time {}, offset {}, transition duration {}",
+    //             transition_run_time,
+    //             next_pattern_time,
+    //             t.driver.next_start_offset(),
+    //             t.driver.duration(),
+    //         );
+    //         state.pattern = t.next_pattern.clone();
+    //         state.current_start = t.start
+    //             + if t.driver.next_start_offset() > 0 {
+    //                 transition_run_time
+    //             } else {
+    //                 0
+    //             };
+    //         state.transition = None;
+
+    //         // update(time, state, cube);
+    //     }
+
+    // // let transition_delta = time - transition.start;
+    // // let next_time = transition_delta.saturating_sub(transition.transition.next_start_offset());
+
+    // // if !transition.transition.is_complete(transition_delta) {
+    // //     let frame_delta = state.frame_delta;
+
+    // //     let update_iter = transition
+    // //         .next_pattern
+    // //         .update_iter(next_time, state.frame_delta);
+
+    // //     for (current, next) in cube.frame_mut().iter_mut().zip(update_iter) {
+    // //         let new = transition
+    // //             .transition
+    // //             .transition_pixel(time, frame_delta, *current, next);
+
+    // //         *current = new;
+    // //     }
+    // // } else {
+    // //     state.pattern = transition.next_pattern.clone();
+    // //     state.current_start = next_time;
+    // //     state.transition = None;
+
+    // //     update(next_time, state, cube);
+    // // }
     } else {
-        // match state.pattern {
-        //     Pattern::Rainbow(ref mut rainbow) => {
-        //         if rainbow.completed_cycles(delta) > 5 {
-        //             state.next_pattern(
-        //                 time,
-        //                 Pattern::Police(Police::default()),
-        //                 Some(Transition::FadeToBlack(FadeToBlack::default())),
-        //             );
-        //         }
-        //     }
-        //     Pattern::SlowRain(ref mut pattern) => {
-        //         // Uncomment to cycle patterns
-        //         // if pattern.completed_cycles(delta) > 5 {
-        //         //     state.next_pattern(
-        //         //         time,
-        //         //         Pattern::Police(Police::default()),
-        //         //         Some(Transition::FadeToBlack(FadeToBlack::default())),
-        //         //     );
-        //         // }
-        //     }
-        //     Pattern::Police(ref mut police) => {
-        //         if police.completed_cycles(delta) > 5 {
-        //             state.next_pattern(
-        //                 time,
-        //                 Pattern::Rainbow(Rainbow::default()),
-        //                 Some(Transition::CrossFade(CrossFade::default())),
-        //             );
-        //         }
-        //     }
-        // }
+        cube.fill_iter(
+            state
+                .pattern
+                .update_iter(pattern_run_time, state.frame_delta),
+        );
+
+        match state.pattern {
+            Pattern::Rainbow(_) => {
+                // Rainbow is disabled
+                // unreachable!();
+
+                // TESTING: Hijack as init state
+                state.next_pattern(
+                    time,
+                    Pattern::SlowRain(SlowRain::default()),
+                    Some(Transition::FadeFromBlack(FadeFromBlack::default())),
+                );
+            }
+            Pattern::SlowRain(ref mut pattern) => {
+                // "cycles" doesn't mean a lot here as drops have different offsets
+                if pattern.completed_cycles(pattern_run_time) == 2 {
+                    state.next_pattern(
+                        time,
+                        Pattern::ChristmasPuke(ChristmasPuke::default()),
+                        Some(Transition::CrossFade(CrossFade::default())),
+                    );
+                }
+            }
+            Pattern::Slices(ref mut pattern) => {
+                if pattern.completed_cycles(pattern_run_time) == 1 {
+                    state.next_pattern(
+                        time,
+                        Pattern::SlowRain(SlowRain::default()),
+                        Some(Transition::FadeFromBlack(FadeFromBlack::default())),
+                    );
+                }
+            }
+            Pattern::ChristmasPuke(ref mut pattern) => {
+                if pattern.completed_cycles(pattern_run_time) == 2 {
+                    state.next_pattern(
+                        time,
+                        Pattern::Slices(Slices::default()),
+                        Some(Transition::CrossFade(CrossFade::default())),
+                    );
+                }
+            }
+        }
     }
 }
 
@@ -153,10 +280,10 @@ fn main() {
     let start = Instant::now();
 
     let mut state = State {
-        // pattern: Pattern::Rainbow(Rainbow::default()),
+        pattern: Pattern::Rainbow(Rainbow::default()),
         // pattern: Pattern::SlowRain(SlowRain::default()),
         // pattern: Pattern::ChristmasPuke(ChristmasPuke::default()),
-        pattern: Pattern::Slices(Slices::default()),
+        // pattern: Pattern::Slices(Slices::default()),
         transition: None,
         current_start: 0,
         frame_delta: 0,

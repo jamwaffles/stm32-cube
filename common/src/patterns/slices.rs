@@ -78,13 +78,15 @@ impl Default for Slices {
     fn default() -> Self {
         let dir = Direction::Z;
 
+        let fade_time = 500;
+
         Self {
-            fade_time: 500,
+            fade_time,
             current_colour: dir.colour(),
             dir,
             brightnesses: [0.0f32; 4],
-            stage: Stage::Init,
-            threshold: 0,
+            stage: Stage::FadeIn { idx: 0 },
+            threshold: fade_time,
         }
     }
 }
@@ -95,6 +97,7 @@ impl PatternUpdate for Slices {
     fn pixel_at(&mut self, idx: usize, time: u32, _frame_delta: u32) -> Apa106Led {
         let brightness = (time % self.fade_time) as f32 / self.fade_time as f32;
 
+        // TODO: Move to a setup method
         // Past end of current stage. Transition state to next phase.
         if time >= self.threshold {
             self.threshold = time + self.fade_time;
@@ -147,6 +150,8 @@ impl PatternUpdate for Slices {
 
     fn completed_cycles(&self, time: u32) -> Self::CycleCounter {
         // Fade for 4 voxels per direction + fadeout time * 3 directions
-        time / (self.fade_time * 5 * 3)
+        let total_time = self.fade_time * 5 * 3;
+
+        time / total_time
     }
 }
