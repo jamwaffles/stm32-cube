@@ -11,27 +11,33 @@ impl Voxel {
 
         let remaining = idx % 16;
 
-        let (x, y) = match z {
-            0 | 2 => match remaining {
-                0..=3 => (remaining, 0),
-                8..=11 => (remaining - 8, 2),
-                4..=7 => (3 - (remaining - 4), 1),
-                12..=15 => (3 - (remaining - 12), 3),
-                idx => panic!("{} out of range", idx),
+        let y = remaining / 4;
+
+        let y = match z {
+            0 | 2 => y,
+            1 | 3 => 3 - y,
+            _ => unreachable!(),
+        };
+
+        let x = remaining % 4;
+
+        let x = match z {
+            0 | 2 => match y {
+                0 | 2 => x,
+                1 | 3 => 3 - x,
+                _ => unreachable!(),
             },
-            1 | 3 => match remaining {
-                0..=3 => (3 - remaining, 0),
-                8..=11 => (3 - (remaining - 8), 2),
-                4..=7 => ((remaining - 4), 1),
-                12..=15 => ((remaining - 12), 3),
-                idx => panic!("{} out of range", idx),
+            1 | 3 => match y {
+                0 | 2 => 3 - x,
+                1 | 3 => x,
+                _ => unreachable!(),
             },
-            z => panic!("Z coord {} out of bounds", z),
+            _ => unreachable!(),
         };
 
         Self {
             x: x as u8,
-            y,
+            y: y as u8,
             z: z as u8,
         }
     }
@@ -41,16 +47,16 @@ impl Voxel {
             0 | 2 => match self.y {
                 0 | 2 => (4 * self.y) + self.x,
                 1 | 3 => (4 * self.y) + 3 - self.x,
-                _ => 64,
+                _ => unreachable!(),
             },
             1 | 3 => match self.y {
                 0 => 15 - self.x,
                 2 => 7 - self.x,
                 1 => self.x + 7 + self.y,
                 3 => self.x + 3 - self.y,
-                _ => 64,
+                _ => unreachable!(),
             },
-            _ => 64,
+            _ => unreachable!(),
         };
 
         // Z coord is easy, just offset n * (num voxels in layer)
@@ -64,15 +70,13 @@ mod tests {
 
     fn rt(voxel: Voxel, index: usize) {
         assert_eq!(voxel.into_index(), index, "voxel {:?}", voxel);
-        dbg!(voxel.into_index());
-        dbg!(Voxel::from_index(index));
-        // assert_eq!(Voxel::from_index(index), voxel, "index {}", index);
+        assert_eq!(Voxel::from_index(index), voxel, "index {}", index);
     }
 
     #[test]
     fn round_trip() {
         rt(Voxel { x: 0, y: 0, z: 0 }, 0);
-        rt(Voxel { x: 0, y: 0, z: 3 }, 63);
+        rt(Voxel { x: 3, y: 3, z: 3 }, 51);
         rt(Voxel { x: 1, y: 0, z: 0 }, 1);
 
         rt(Voxel { x: 0, y: 0, z: 0 }, 0);
@@ -85,7 +89,6 @@ mod tests {
         rt(Voxel { x: 1, y: 2, z: 0 }, 9);
         rt(Voxel { x: 1, y: 3, z: 0 }, 14);
 
-        rt(Voxel { x: 3, y: 3, z: 3 }, 51);
         rt(Voxel { x: 1, y: 2, z: 3 }, 54);
         rt(Voxel { x: 3, y: 3, z: 2 }, 44);
     }

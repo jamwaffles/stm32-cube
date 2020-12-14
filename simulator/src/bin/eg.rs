@@ -121,36 +121,27 @@ fn update(time: u32, state: &mut State, cube: &mut Cube) {
             update(time, state, cube);
         }
     } else {
-        match state.pattern {
-            Pattern::Rainbow(ref mut rainbow) => {
-                if rainbow.completed_cycles(delta) > 5 {
-                    state.next_pattern(
-                        time,
-                        Pattern::Police(Police::default()),
-                        Some(Transition::FadeToBlack(FadeToBlack::default())),
-                    );
-                }
-            }
-            Pattern::SlowRain(ref mut pattern) => {
-                // Uncomment to cycle patterns
-                // if pattern.completed_cycles(delta) > 5 {
-                //     state.next_pattern(
-                //         time,
-                //         Pattern::Police(Police::default()),
-                //         Some(Transition::FadeToBlack(FadeToBlack::default())),
-                //     );
-                // }
-            }
-            Pattern::Police(ref mut police) => {
-                if police.completed_cycles(delta) > 5 {
-                    state.next_pattern(
-                        time,
-                        Pattern::Rainbow(Rainbow::default()),
-                        Some(Transition::CrossFade(CrossFade::default())),
-                    );
-                }
-            }
-        }
+        // match state.pattern {
+        //     Pattern::Rainbow(ref mut rainbow) => {
+        //         if rainbow.completed_cycles(delta) > 5 {
+        //             state.next_pattern(
+        //                 time,
+        //                 Pattern::Police(Police::default()),
+        //                 Some(Transition::FadeToBlack(FadeToBlack::default())),
+        //             );
+        //         }
+        //     }
+        //     Pattern::SlowRain(ref mut pattern) => {
+        //         // Uncomment to cycle patterns
+        //         // if pattern.completed_cycles(delta) > 5 {
+        //         //     state.next_pattern(
+        //         //         time,
+        //         //         Pattern::Police(Police::default()),
+        //         //         Some(Transition::FadeToBlack(FadeToBlack::default())),
+        //         //     );
+        //         // }
+        //     }
+        // }
     }
 }
 
