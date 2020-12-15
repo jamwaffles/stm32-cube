@@ -99,100 +99,38 @@ dependencies = [
 ]
 
 [[package]]
-name = "cortex-m-rtic"
-version = "0.5.5"
+name = "cortex-m-rtfm"
+version = "0.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b30efcb6b7920d9016182c485687f0012487032a14c415d2fce6e9862ef8260e"
+checksum = "4fc65a600a5c8baf0a5fd3b2c0223b8d8fc7aa7d6d0c9a3350ce40a4da49ccea"
 dependencies = [
  "cortex-m",
  "cortex-m-rt",
- "cortex-m-rtic-macros",
+ "cortex-m-rtfm-macros",
  "heapless",
- "rtic-core",
+ "rtfm-core",
  "version_check",
 ]
 
 [[package]]
-name = "cortex-m-rtic-macros"
-version = "0.5.2"
+name = "cortex-m-rtfm-macros"
+version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9a1a6a4c9550373038c0e21a78d44d529bd697c25bbf6b8004bddc6e63b119c7"
+checksum = "fa4a3fc88fff9970152a7f79bf6919d538395bc1f11ba90a1e6970a3521d8b88"
 dependencies = [
  "proc-macro2",
  "quote",
- "rtic-syntax",
+ "rtfm-syntax",
  "syn",
 ]
 
 [[package]]
-name = "defmt"
-version = "0.1.3"
+name = "cortex-m-semihosting"
+version = "0.3.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4160ab978165ef486b79dca2156cf91f28156e696600c158bac179e957c0f618"
-dependencies = [
- "defmt-macros",
- "heapless",
- "semver 0.11.0",
-]
-
-[[package]]
-name = "defmt-macros"
-version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "925bb4a9cfaee4555fa533582032be2b121a11c1c203bc0dd17065497738ffb3"
-dependencies = [
- "defmt-parser",
- "proc-macro2",
- "quote",
- "syn",
-]
-
-[[package]]
-name = "defmt-parser"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "812b30ff14930407c86a23e256ac050b8e6913f597adcc88e29d40517f7a16de"
-
-[[package]]
-name = "defmt-rtt"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2a3b88b3d83d73d910738feb4bb91543f61622420dab760c769f4111b379e354"
+checksum = "6bffa6c1454368a6aa4811ae60964c38e6996d397ff8095a8b9211b1c1f749bc"
 dependencies = [
  "cortex-m",
- "defmt",
-]
-
-[[package]]
-name = "defmt-test"
-version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2a41c3f8526efd60e0f4119292951a3801d54544212626267ac8918d611bbf4b"
-dependencies = [
- "cortex-m",
- "cortex-m-rt",
- "defmt",
- "defmt-test-macros",
-]
-
-[[package]]
-name = "defmt-test-macros"
-version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a27cc95d99312856b2807571a7cf898cff3c9fca54504c2a451054663dd71b10"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
-]
-
-[[package]]
-name = "embedded-dma"
-version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "46c8c02e4347a0267ca60813c952017f4c5948c232474c6010a381a337f1bda4"
-dependencies = [
- "stable_deref_trait",
 ]
 
 [[package]]
@@ -203,21 +141,6 @@ checksum = "fa998ce59ec9765d15216393af37a58961ddcefb14c753b4816ba2191d865fcb"
 dependencies = [
  "nb 0.1.3",
  "void",
-]
-
-[[package]]
-name = "firmware"
-version = "0.1.0"
-dependencies = [
- "common",
- "cortex-m",
- "cortex-m-rt",
- "cortex-m-rtic",
- "defmt",
- "defmt-rtt",
- "embedded-hal",
- "panic-probe",
- "stm32f1xx-hal",
 ]
 
 [[package]]
@@ -277,9 +200,9 @@ dependencies = [
 
 [[package]]
 name = "indexmap"
-version = "1.6.1"
+version = "1.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4fb1fa934250de4de8aef298d81c729a7d33d8c239daa3a7575e6b92bfc7313b"
+checksum = "55e2e4c765aa53a0424761bf9f41aa7a6ac1efa87238f59560640e27fca028f2"
 dependencies = [
  "autocfg",
  "hashbrown",
@@ -307,23 +230,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "546c37ac5d9e56f55e73b677106873d9d9f5190605e41a856503623648488cae"
 
 [[package]]
-name = "panic-probe"
-version = "0.1.0"
+name = "panic-semihosting"
+version = "0.5.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0de06adf67ed4f46572b31ac5340b8137f8a37d5e89fd68101d92767c9feb5f0"
+checksum = "c3d55dedd501dfd02514646e0af4d7016ce36bc12ae177ef52056989966a1eec"
 dependencies = [
  "cortex-m",
- "cortex-m-rt",
- "defmt",
-]
-
-[[package]]
-name = "pest"
-version = "2.1.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "10f4872ae94d7b90ae48754df22fd42ad52ce740b8f370b03da4835417403e53"
-dependencies = [
- "ucd-trie",
+ "cortex-m-semihosting",
 ]
 
 [[package]]
@@ -403,16 +316,16 @@ dependencies = [
 ]
 
 [[package]]
-name = "rtic-core"
-version = "0.3.1"
+name = "rtfm-core"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8bd58a6949de8ff797a346a28d9f13f7b8f54fa61bb5e3cb0985a4efb497a5ef"
+checksum = "9ec893edb2aa5b70320b94896ffea22a7ebb1cf3f942bb67cd5b60a865a63493"
 
 [[package]]
-name = "rtic-syntax"
+name = "rtfm-syntax"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8152fcaa845720d61e6cc570548b89144c2c307f18a480bbd97e55e9f6eeff04"
+checksum = "4455e23c34df3d66454e7e218a4d76a7f83321d04a806be614463341cec4116e"
 dependencies = [
  "indexmap",
  "proc-macro2",
@@ -425,7 +338,7 @@ version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "138e3e0acb6c9fb258b19b67cb8abd63c00679d2851805ea151465464fe9030a"
 dependencies = [
- "semver 0.9.0",
+ "semver",
 ]
 
 [[package]]
@@ -434,16 +347,7 @@ version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1d7eb9ef2c18661902cc47e535f9bc51b78acd254da71d375c2f6720d9a40403"
 dependencies = [
- "semver-parser 0.7.0",
-]
-
-[[package]]
-name = "semver"
-version = "0.11.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f301af10236f6df4160f7c3f04eec6dbc70ace82d23326abad5edee88801c6b6"
-dependencies = [
- "semver-parser 0.10.1",
+ "semver-parser",
 ]
 
 [[package]]
@@ -453,19 +357,24 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "388a1df253eca08550bef6c72392cfe7c30914bf41df5269b68cbd6ff8f570a3"
 
 [[package]]
-name = "semver-parser"
-version = "0.10.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "42ef146c2ad5e5f4b037cd6ce2ebb775401729b19a82040c1beac9d36c7d1428"
-dependencies = [
- "pest",
-]
-
-[[package]]
 name = "stable_deref_trait"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a8f112729512f8e442d81f95a8a7ddf2b7c6b8a1a6f509a95864142b30cab2d3"
+
+[[package]]
+name = "stm32-cube"
+version = "0.1.0"
+dependencies = [
+ "as-slice",
+ "common",
+ "cortex-m",
+ "cortex-m-rt",
+ "cortex-m-rtfm",
+ "embedded-hal",
+ "panic-semihosting",
+ "stm32f1xx-hal",
+]
 
 [[package]]
 name = "stm32f1"
@@ -481,14 +390,14 @@ dependencies = [
 
 [[package]]
 name = "stm32f1xx-hal"
-version = "0.7.0"
+version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bf679de34580d2f8806d9a6384c110b6df002404e1ff024cf8d567c91df4d4b2"
+checksum = "af9b9e5d7c2901ee39fc9527412327a1fe08f1d84e9d7f4b3497448e655e5098"
 dependencies = [
+ "as-slice",
  "cast",
  "cortex-m",
  "cortex-m-rt",
- "embedded-dma",
  "embedded-hal",
  "nb 0.1.3",
  "stm32f1",
@@ -497,9 +406,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "1.0.54"
+version = "1.0.53"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9a2af957a63d6bd42255c359c93d9bfdb97076bd3b820897ce55ffbfbf107f44"
+checksum = "8833e20724c24de12bbaba5ad230ea61c3eafb05b881c7c9d3cfe8638b187e68"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -507,29 +416,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "testsuite"
-version = "0.1.0"
-dependencies = [
- "cortex-m",
- "cortex-m-rt",
- "defmt",
- "defmt-rtt",
- "defmt-test",
- "firmware",
- "panic-probe",
-]
-
-[[package]]
 name = "typenum"
 version = "1.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "373c8a200f9e67a0c95e62a4f52fbf80c23b4381c05a17845531982fa99e6b33"
-
-[[package]]
-name = "ucd-trie"
-version = "0.1.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "56dee185309b50d1f11bfedef0fe6d036842e3fb77413abef29f8f8d1c5d4c1c"
 
 [[package]]
 name = "unicode-xid"

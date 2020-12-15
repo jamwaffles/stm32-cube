@@ -1,20 +1,60 @@
 [package]
-name = "stm32-cube"
-version = "0.1.0"
 authors = ["James Waples <james@wapl.es>"]
+name = "firmware"
 edition = "2018"
+version = "0.1.0"
+default-run = "main"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[workspace]
+members = ["testsuite"]
 
 [dependencies]
-embedded-hal = "0.2.3"
-panic-semihosting = "0.5.3"
-cortex-m-rt = "0.6.11"
-cortex-m = "0.6.1"
-as-slice = "0.1.2"
-cortex-m-rtfm = "0.5.0"
+cortex-m = "0.6.4"
+cortex-m-rt = "0.6.13"
+defmt = "0.1.2"
+defmt-rtt = "0.1.0"
+panic-probe = { version = "0.1.0", features = ["print-defmt"] }
+stm32f1xx-hal = { version = "0.7.0", features = [ "rt", "stm32f103" ] }
+cortex-m-rtic = "0.5.5"
+embedded-hal = "0.2.4"
 common = { path = "../common" }
 
-[dependencies.stm32f1xx-hal]
-version = "0.6.0"# Use version of HAL with hacked as-slice dependency to get 1537 item array working
-features = [ "stm32f103", "rt" ]
+[features]
+# set logging levels here
+default = [
+  "defmt-default",
+  # "dependency-a/defmt-trace",
+]
+
+# do NOT modify these features
+defmt-default = []
+defmt-trace = []
+defmt-debug = []
+defmt-info = []
+defmt-warn = []
+defmt-error = []
+
+[profile.dev]
+codegen-units = 1
+debug = 2
+debug-assertions = true # <-
+incremental = false
+opt-level = 3 # <-
+overflow-checks = true # <-
+
+[profile.release]
+codegen-units = 1
+debug = 2
+debug-assertions = false # <-
+incremental = false
+lto = 'fat'
+opt-level = 3 # <-
+overflow-checks = false # <-
+
+# uncomment this to switch from the crates.io version of defmt to its git version
+# check app-template's README for instructions
+# [patch.crates-io]
+# defmt = { git = "https://github.com/knurling-rs/defmt", rev = "use defmt version reported by `probe-run --version`" }
+# defmt-rtt = { git = "https://github.com/knurling-rs/defmt", rev = "use defmt version reported by `probe-run --version`" }
+# defmt-test = { git = "https://github.com/knurling-rs/defmt", rev = "use defmt version reported by `probe-run --version`" }
+# panic-probe = { git = "https://github.com/knurling-rs/defmt", rev = "use defmt version reported by `probe-run --version`" }
