@@ -72,7 +72,7 @@ impl State {
 
             match self.pattern {
                 Pattern::Rainbow(ref mut pattern) => {
-                    if pattern.completed_cycles(pattern_run_time) >= 3 {
+                    if pattern.completed_cycles(pattern_run_time) >= 7 {
                         self.next_pattern(
                             time,
                             Pattern::SlowRain(SlowRain::default()),
@@ -82,7 +82,7 @@ impl State {
                 }
                 Pattern::SlowRain(ref mut pattern) => {
                     // "cycles" doesn't mean a lot here as drops have different offsets
-                    if pattern.completed_cycles(pattern_run_time) == 3 {
+                    if pattern.completed_cycles(pattern_run_time) == 10 {
                         self.next_pattern(
                             time,
                             Pattern::Slices(Slices::default()),
@@ -100,7 +100,7 @@ impl State {
                     }
                 }
                 Pattern::ChristmasPuke(ref mut pattern) => {
-                    if pattern.completed_cycles(pattern_run_time) == 3 {
+                    if pattern.completed_cycles(pattern_run_time) == 7 {
                         self.next_pattern(
                             time,
                             Pattern::Rainbow(Rainbow::default()),

@@ -75,7 +75,7 @@ impl Default for Slices {
     fn default() -> Self {
         let dir = Direction::Z;
 
-        let fade_time = 500;
+        let fade_time = 1000;
 
         Self {
             fade_time,

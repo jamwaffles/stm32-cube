@@ -7,7 +7,7 @@ pub struct FadeToBlack {
 
 impl Default for FadeToBlack {
     fn default() -> Self {
-        Self { duration: 1000 }
+        Self { duration: 2000 }
     }
 }
 

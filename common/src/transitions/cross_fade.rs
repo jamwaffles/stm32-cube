@@ -6,7 +6,7 @@ pub struct CrossFade {
 
 impl Default for CrossFade {
     fn default() -> Self {
-        Self { duration: 2000 }
+        Self { duration: 4000 }
     }
 }
 
