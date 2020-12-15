@@ -22,7 +22,6 @@ struct TransitionStuff {
 struct State {
     current_start: u32,
     pattern: Pattern,
-    frame_delta: u32,
     transition: Option<TransitionStuff>,
 }
 
@@ -75,17 +74,12 @@ fn update(time: u32, state: &mut State, cube: &mut Cube) {
         );
 
         if !t.driver.is_complete(transition_run_time) {
-            let update_iter = t
-                .next_pattern
-                .update_iter(next_pattern_run_time, state.frame_delta);
+            let update_iter = t.next_pattern.update_iter(next_pattern_run_time);
 
             for (current, next) in cube.frame_mut().iter_mut().zip(update_iter) {
-                let new = t.driver.transition_pixel(
-                    transition_run_time,
-                    state.frame_delta,
-                    *current,
-                    next,
-                );
+                let new = t
+                    .driver
+                    .transition_pixel(transition_run_time, *current, next);
 
                 *current = new;
             }
@@ -100,11 +94,7 @@ fn update(time: u32, state: &mut State, cube: &mut Cube) {
             state.transition = None;
         }
     } else {
-        cube.fill_iter(
-            state
-                .pattern
-                .update_iter(pattern_run_time, state.frame_delta),
-        );
+        cube.fill_iter(state.pattern.update_iter(pattern_run_time));
 
         match state.pattern {
             Pattern::Rainbow(ref mut pattern) => {
@@ -210,19 +200,12 @@ fn main() {
         // pattern: Pattern::Slices(Slices::default()),
         transition: None,
         current_start: 0,
-        frame_delta: 0,
     };
-
-    let mut prev_time = 0;
 
     cube.set_at_coord(Voxel { x: 0, y: 0, z: 0 }, Apa106Led::WARM_WHITE);
 
     while window.render_with_camera(&mut arc_ball) {
         let time = start.elapsed().as_millis();
-
-        state.frame_delta = time as u32 - prev_time;
-
-        prev_time = time as u32;
 
         update(time as u32, &mut state, &mut cube);
 

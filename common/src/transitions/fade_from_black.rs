@@ -12,13 +12,7 @@ impl Default for FadeFromBlack {
 }
 
 impl TransitionUpdate for FadeFromBlack {
-    fn transition_pixel(
-        &self,
-        time: u32,
-        frame_delta: u32,
-        current: Apa106Led,
-        next: Apa106Led,
-    ) -> Apa106Led {
+    fn transition_pixel(&self, time: u32, current: Apa106Led, next: Apa106Led) -> Apa106Led {
         let multiplier = time as f32 / self.duration as f32;
 
         let multiplier = multiplier.min(1.0);

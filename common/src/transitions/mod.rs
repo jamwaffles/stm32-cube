@@ -15,17 +15,11 @@ pub enum Transition {
 }
 
 impl TransitionUpdate for Transition {
-    fn transition_pixel(
-        &self,
-        time: u32,
-        frame_delta: u32,
-        current: Apa106Led,
-        next: Apa106Led,
-    ) -> Apa106Led {
+    fn transition_pixel(&self, time: u32, current: Apa106Led, next: Apa106Led) -> Apa106Led {
         match self {
-            Self::FadeToBlack(t) => t.transition_pixel(time, frame_delta, current, next),
-            Self::FadeFromBlack(t) => t.transition_pixel(time, frame_delta, current, next),
-            Self::CrossFade(t) => t.transition_pixel(time, frame_delta, current, next),
+            Self::FadeToBlack(t) => t.transition_pixel(time, current, next),
+            Self::FadeFromBlack(t) => t.transition_pixel(time, current, next),
+            Self::CrossFade(t) => t.transition_pixel(time, current, next),
         }
     }
 
@@ -55,13 +49,7 @@ impl TransitionUpdate for Transition {
 }
 
 pub trait TransitionUpdate {
-    fn transition_pixel(
-        &self,
-        time: u32,
-        frame_delta: u32,
-        current: Apa106Led,
-        next: Apa106Led,
-    ) -> Apa106Led;
+    fn transition_pixel(&self, time: u32, current: Apa106Led, next: Apa106Led) -> Apa106Led;
 
     fn next_start_offset(&self) -> u32;
 

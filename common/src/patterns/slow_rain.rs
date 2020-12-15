@@ -58,7 +58,7 @@ impl Default for SlowRain {
 impl PatternUpdate for SlowRain {
     type CycleCounter = u32;
 
-    fn pixel_at(&mut self, idx: usize, time: u32, _frame_delta: u32) -> Apa106Led {
+    fn pixel_at(&mut self, idx: usize, time: u32) -> Apa106Led {
         let voxel = Voxel::from_index(idx);
         let column_idx = (voxel.x + voxel.y * 4) as usize;
 

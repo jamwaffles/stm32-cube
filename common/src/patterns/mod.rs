@@ -19,12 +19,11 @@ pub enum Pattern {
 }
 
 impl Pattern {
-    pub fn update_iter(&'_ mut self, time: u32, frame_delta: u32) -> PatternIter<'_> {
+    pub fn update_iter(&'_ mut self, time: u32) -> PatternIter<'_> {
         PatternIter {
             pattern: self,
             idx: 0,
             time,
-            frame_delta,
         }
     }
 }
@@ -32,7 +31,7 @@ impl Pattern {
 pub trait PatternUpdate {
     type CycleCounter;
 
-    fn pixel_at(&mut self, idx: usize, time: u32, frame_delta: u32) -> Apa106Led;
+    fn pixel_at(&mut self, idx: usize, time: u32) -> Apa106Led;
 
     /// Get number of complete cycles this pattern will have run at a certain time.
     ///
@@ -45,7 +44,6 @@ pub struct PatternIter<'a> {
     pattern: &'a mut Pattern,
     idx: usize,
     time: u32,
-    frame_delta: u32,
 }
 
 impl<'a> Iterator for PatternIter<'a> {
@@ -57,10 +55,10 @@ impl<'a> Iterator for PatternIter<'a> {
         }
 
         let pixel = match self.pattern {
-            Pattern::Rainbow(p) => p.pixel_at(self.idx, self.time, self.frame_delta),
-            Pattern::SlowRain(p) => p.pixel_at(self.idx, self.time, self.frame_delta),
-            Pattern::ChristmasPuke(p) => p.pixel_at(self.idx, self.time, self.frame_delta),
-            Pattern::Slices(p) => p.pixel_at(self.idx, self.time, self.frame_delta),
+            Pattern::Rainbow(p) => p.pixel_at(self.idx, self.time),
+            Pattern::SlowRain(p) => p.pixel_at(self.idx, self.time),
+            Pattern::ChristmasPuke(p) => p.pixel_at(self.idx, self.time),
+            Pattern::Slices(p) => p.pixel_at(self.idx, self.time),
         };
 
         self.idx += 1;

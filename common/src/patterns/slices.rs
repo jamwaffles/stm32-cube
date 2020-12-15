@@ -94,7 +94,7 @@ impl Default for Slices {
 impl PatternUpdate for Slices {
     type CycleCounter = u32;
 
-    fn pixel_at(&mut self, idx: usize, time: u32, _frame_delta: u32) -> Apa106Led {
+    fn pixel_at(&mut self, idx: usize, time: u32) -> Apa106Led {
         let brightness = (time % self.fade_time) as f32 / self.fade_time as f32;
 
         // TODO: Move to a setup method

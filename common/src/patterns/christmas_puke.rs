@@ -50,7 +50,7 @@ impl Default for ChristmasPuke {
 impl PatternUpdate for ChristmasPuke {
     type CycleCounter = u32;
 
-    fn pixel_at(&mut self, idx: usize, time: u32, _frame_delta: u32) -> Apa106Led {
+    fn pixel_at(&mut self, idx: usize, time: u32) -> Apa106Led {
         let pos = time % self.duration;
         let scaler = self.duration as f32 / 255.0;
 
