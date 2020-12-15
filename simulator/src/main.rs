@@ -1,37 +1,30 @@
 use common::{apa106led::Apa106Led, cube::Cube, patterns::*, transitions::*, voxel::Voxel};
 use core::f32::consts::PI;
-use kiss3d::event::{Action, Key, WindowEvent};
+use kiss3d::camera::ArcBall;
 use kiss3d::light::Light;
-use kiss3d::post_processing::SobelEdgeHighlight;
 use kiss3d::window::Window;
-use kiss3d::{
-    camera::{ArcBall, FirstPerson},
-    scene::SceneNode,
-};
 use nalgebra::{Point3, Translation3, UnitQuaternion, Vector3};
-use sdl2::libc::RUN_LVL;
+
 use std::time::Instant;
 
-struct TransitionStuff {
+struct TransitionState {
     driver: Transition,
     next_pattern: Pattern,
     start: u32,
-    next_pattern_start: u32,
 }
 
 struct State {
     current_start: u32,
     pattern: Pattern,
-    transition: Option<TransitionStuff>,
+    transition: Option<TransitionState>,
 }
 
 impl State {
     fn next_pattern(&mut self, time: u32, new_pattern: Pattern, transition: Option<Transition>) {
         if let Some(transition) = transition {
-            self.transition = Some(TransitionStuff {
+            self.transition = Some(TransitionState {
                 driver: transition,
                 start: time,
-                next_pattern_start: time + transition.next_start_offset(),
                 next_pattern: new_pattern,
             });
         } else {
@@ -43,7 +36,6 @@ impl State {
 }
 
 fn update(time: u32, state: &mut State, cube: &mut Cube) {
-    // TODO: Move into else {}
     let pattern_run_time = time - state.current_start;
 
     println!(
@@ -55,7 +47,6 @@ fn update(time: u32, state: &mut State, cube: &mut Cube) {
         let transition_run_time = time - t.start;
 
         // Next pattern starts at end of transition
-        // TODO: Make this an enum
         let next_start = if t.driver.next_start_offset() > 0 {
             t.start + transition_run_time
         }
