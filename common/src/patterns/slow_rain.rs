@@ -100,6 +100,9 @@ impl PatternUpdate for SlowRain {
             mask = Mask::Visible;
         }
 
+        // Subtract time instead of adding to it to flip pattern the right way up
+        let time_pos = 1.0 - time_pos;
+
         // Off the top of the cube by tail_len to below cube by tail_len
         let scaled_time_pos = -tail_len + (time_pos * total_scale);
 

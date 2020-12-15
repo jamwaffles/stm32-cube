@@ -36,6 +36,7 @@ fn main() {
         sphere_scale + 0.1,
         -cube_size / 2.0,
     ));
+    g.append_rotation_wrt_center(&UnitQuaternion::from_axis_angle(&Vector3::x_axis(), PI));
     g.set_local_scale(sphere_scale, sphere_scale, sphere_scale);
 
     for idx in 0..64 {
@@ -50,8 +51,8 @@ fn main() {
         // NOTE: Weird ordering here as Z faces out of screen with KISS3D
         s.append_translation(&Translation3::new(
             x as f32 * cube_scale,
-            (3.0 - z) as f32 * cube_scale,
-            y as f32 * cube_scale,
+            -z as f32 * cube_scale,
+            -y as f32 * cube_scale,
         ));
 
         voxels.push(s);
