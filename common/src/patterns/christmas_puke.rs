@@ -1,6 +1,4 @@
-use crate::{apa106led::Apa106Led, cube::Cube, patterns::PatternUpdate};
-use core::f32::consts::PI;
-use micromath::F32Ext;
+use crate::{apa106led::Apa106Led, patterns::PatternUpdate};
 
 #[derive(Clone, Debug)]
 pub struct ChristmasPuke {

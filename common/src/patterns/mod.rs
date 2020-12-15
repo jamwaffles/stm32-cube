@@ -3,7 +3,7 @@ mod rainbow;
 mod slices;
 mod slow_rain;
 
-use crate::{apa106led::Apa106Led, cube::Cube};
+use crate::apa106led::Apa106Led;
 pub use christmas_puke::*;
 use core::iter::Iterator;
 pub use rainbow::*;

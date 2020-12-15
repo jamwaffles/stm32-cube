@@ -1,6 +1,3 @@
-use core::f32::consts::PI;
-use micromath::F32Ext;
-
 pub const ON_BYTE: u8 = 0b1111_1100;
 pub const OFF_BYTE: u8 = 0b1100_0000;
 

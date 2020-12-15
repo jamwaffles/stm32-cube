@@ -1,12 +1,16 @@
 #![no_std]
 #![no_main]
 
-use common::{apa106led::Apa106Led, cube::Cube};
+use common::{
+    apa106led::Apa106Led,
+    cube::Cube,
+    patterns::{Pattern, Rainbow},
+};
 use cortex_m::singleton;
 use firmware as _; // global logger + panicking-behavior + memory layout
 use rtic::app;
 use stm32f1xx_hal::{
-    gpio::{gpioc::PC13, Output, PushPull, State},
+    gpio::{self, gpioc::PC13, Output, PushPull},
     pac::{self, SPI2},
     prelude::*,
     spi::{Mode, Phase, Polarity, Spi},
@@ -32,7 +36,8 @@ type DmaInterface = stm32f1xx_hal::dma::TxDma<
     stm32f1xx_hal::dma::dma1::C5,
 >;
 
-const FPS: u32 = 60;
+// 1000 / FPS should produce an integer for better accuracy.
+const FPS: u32 = 5;
 
 #[app(device = stm32f1xx_hal::stm32, peripherals = true)]
 const APP: () = {
@@ -41,6 +46,9 @@ const APP: () = {
         spi_dma: &'static mut DmaInterface,
         timer: CountDownTimer<pac::TIM1>,
         cube: Cube,
+        state: common::State,
+        #[init(0)]
+        time: u32,
     }
 
     #[init]
@@ -64,7 +72,7 @@ const APP: () = {
 
         let status = gpioc
             .pc13
-            .into_push_pull_output_with_state(&mut gpioc.crh, State::High);
+            .into_push_pull_output_with_state(&mut gpioc.crh, gpio::State::High);
 
         let mut timer = Timer::tim1(dp.TIM1, &clocks, &mut rcc.apb2).start_count_down(FPS.hz());
         timer.listen(Event::Update);
@@ -115,6 +123,8 @@ const APP: () = {
             blue: 0,
         });
 
+        let state = common::State::new(Pattern::Rainbow(Rainbow::default()));
+
         defmt::info!("Config complete");
 
         init::LateResources {
@@ -122,6 +132,7 @@ const APP: () = {
             status,
             spi_dma,
             cube,
+            state,
         }
     }
 
@@ -133,11 +144,22 @@ const APP: () = {
         }
     }
 
-    #[task(binds = TIM1_UP, resources = [status, timer])]
+    #[task(binds = TIM1_UP, resources = [status, timer, state, cube, time])]
     fn update(cx: update::Context) {
-        let update::Resources { status, timer, .. } = cx.resources;
+        let update::Resources {
+            status,
+            timer,
+            state,
+            cube,
+            time,
+            ..
+        } = cx.resources;
 
         status.toggle().unwrap();
+
+        *time += 1000 / FPS;
+
+        state.drive(*time, cube);
 
         defmt::trace!("Ping");
 

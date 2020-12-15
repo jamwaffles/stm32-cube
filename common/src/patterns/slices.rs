@@ -1,6 +1,4 @@
-use crate::{apa106led::Apa106Led, cube::Cube, patterns::PatternUpdate, voxel::Voxel};
-use core::f32::consts::PI;
-use micromath::F32Ext;
+use crate::{apa106led::Apa106Led, patterns::PatternUpdate, voxel::Voxel};
 
 #[derive(Debug, Copy, Clone)]
 enum Direction {
@@ -49,7 +47,6 @@ impl Direction {
 
 #[derive(Debug, Copy, Clone)]
 enum Stage {
-    Init,
     FadeIn { idx: usize },
     FadeOut,
 }
@@ -103,9 +100,6 @@ impl PatternUpdate for Slices {
             self.threshold = time + self.fade_time;
 
             self.stage = match self.stage {
-                // Noop - all the state is set up, we're just updating `self.threshold` correctly
-                // in this iteration.
-                Stage::Init => Stage::FadeIn { idx: 0 },
                 // Move on to next slice
                 Stage::FadeIn { idx } if idx < 3 => Stage::FadeIn { idx: idx + 1 },
                 // Reached end of fade in, move on to fade whole cube out
@@ -123,7 +117,6 @@ impl PatternUpdate for Slices {
         // TODO: Move to a pre-frame method
         if idx == 0 {
             match self.stage {
-                Stage::Init => {}
                 Stage::FadeIn { idx } => {
                     self.brightnesses[idx] = brightness.max(self.brightnesses[idx]);
                 }

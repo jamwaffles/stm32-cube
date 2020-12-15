@@ -1,4 +1,4 @@
-use common::{apa106led::Apa106Led, cube::Cube, patterns::*, transitions::*, voxel::Voxel};
+use common::{apa106led::Apa106Led, cube::Cube, patterns::*, state::State, voxel::Voxel};
 use core::f32::consts::PI;
 use kiss3d::camera::ArcBall;
 use kiss3d::light::Light;
@@ -6,131 +6,6 @@ use kiss3d::window::Window;
 use nalgebra::{Point3, Translation3, UnitQuaternion, Vector3};
 
 use std::time::Instant;
-
-struct TransitionState {
-    driver: Transition,
-    next_pattern: Pattern,
-    start: u32,
-}
-
-struct State {
-    current_start: u32,
-    pattern: Pattern,
-    transition: Option<TransitionState>,
-}
-
-impl State {
-    fn next_pattern(&mut self, time: u32, new_pattern: Pattern, transition: Option<Transition>) {
-        if let Some(transition) = transition {
-            self.transition = Some(TransitionState {
-                driver: transition,
-                start: time,
-                next_pattern: new_pattern,
-            });
-        } else {
-            self.current_start = time;
-            self.transition = None;
-            self.pattern = new_pattern;
-        }
-    }
-}
-
-fn update(time: u32, state: &mut State, cube: &mut Cube) {
-    let pattern_run_time = time - state.current_start;
-
-    println!(
-        "--- Frame {} (delta {}, current start {}) ---",
-        time, pattern_run_time, state.current_start
-    );
-
-    if let Some(t) = state.transition.as_mut() {
-        let transition_run_time = time - t.start;
-
-        // Next pattern starts at end of transition
-        let next_start = if t.driver.next_start_offset() > 0 {
-            t.start + transition_run_time
-        }
-        // Next pattern starts at the same time as the transition
-        else {
-            t.start
-        };
-
-        let next_pattern_run_time = time - next_start;
-
-        println!(
-            "D {}, Transition D {}, offset {}",
-            pattern_run_time,
-            transition_run_time,
-            t.driver.next_start_offset()
-        );
-
-        if !t.driver.is_complete(transition_run_time) {
-            let update_iter = t.next_pattern.update_iter(next_pattern_run_time);
-
-            for (current, next) in cube.frame_mut().iter_mut().zip(update_iter) {
-                let new = t
-                    .driver
-                    .transition_pixel(transition_run_time, *current, next);
-
-                *current = new;
-            }
-        } else {
-            println!(
-                "Transition complete in {}. Next start: {}",
-                transition_run_time, next_start
-            );
-
-            state.pattern = t.next_pattern.clone();
-            state.current_start = next_start;
-            state.transition = None;
-        }
-    } else {
-        cube.fill_iter(state.pattern.update_iter(pattern_run_time));
-
-        match state.pattern {
-            Pattern::Rainbow(ref mut pattern) => {
-                // Rainbow is disabled
-                // unreachable!();
-
-                if pattern.completed_cycles(pattern_run_time) >= 3 {
-                    state.next_pattern(
-                        time,
-                        Pattern::SlowRain(SlowRain::default()),
-                        Some(Transition::CrossFade(CrossFade::default())),
-                    );
-                }
-            }
-            Pattern::SlowRain(ref mut pattern) => {
-                // "cycles" doesn't mean a lot here as drops have different offsets
-                if pattern.completed_cycles(pattern_run_time) == 3 {
-                    state.next_pattern(
-                        time,
-                        Pattern::Slices(Slices::default()),
-                        Some(Transition::FadeToBlack(FadeToBlack::default())),
-                    );
-                }
-            }
-            Pattern::Slices(ref mut pattern) => {
-                if pattern.completed_cycles(pattern_run_time) == 2 {
-                    state.next_pattern(
-                        time,
-                        Pattern::ChristmasPuke(ChristmasPuke::default()),
-                        Some(Transition::CrossFade(CrossFade::default())),
-                    );
-                }
-            }
-            Pattern::ChristmasPuke(ref mut pattern) => {
-                if pattern.completed_cycles(pattern_run_time) == 3 {
-                    state.next_pattern(
-                        time,
-                        Pattern::Rainbow(Rainbow::default()),
-                        Some(Transition::CrossFade(CrossFade::default())),
-                    );
-                }
-            }
-        }
-    }
-}
 
 fn main() {
     let eye = Point3::new(10.0f32, 10.0, 10.0);
@@ -184,21 +59,14 @@ fn main() {
 
     let start = Instant::now();
 
-    let mut state = State {
-        pattern: Pattern::Rainbow(Rainbow::default()),
-        // pattern: Pattern::SlowRain(SlowRain::default()),
-        // pattern: Pattern::ChristmasPuke(ChristmasPuke::default()),
-        // pattern: Pattern::Slices(Slices::default()),
-        transition: None,
-        current_start: 0,
-    };
+    let mut state = State::new(Pattern::Rainbow(Rainbow::default()));
 
     cube.set_at_coord(Voxel { x: 0, y: 0, z: 0 }, Apa106Led::WARM_WHITE);
 
     while window.render_with_camera(&mut arc_ball) {
         let time = start.elapsed().as_millis();
 
-        update(time as u32, &mut state, &mut cube);
+        state.drive(time as u32, &mut cube);
 
         // Update voxel colours
         for (sphere, c) in voxels.iter_mut().zip(cube.frame().iter()) {
