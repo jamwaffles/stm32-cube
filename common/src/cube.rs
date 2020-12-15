@@ -1,30 +1,25 @@
 use crate::{apa106led::Apa106Led, voxel::Voxel};
 
-const ON_BYTE: u8 = 0b1111_1100;
-const OFF_BYTE: u8 = 0b1100_0000;
-
 #[derive(Debug, Clone, Copy)]
 pub struct Cube {
     frame: [Apa106Led; 64],
-}
 
-impl Default for Cube {
-    fn default() -> Self {
-        Self {
-            frame: [Apa106Led::default(); 64],
-        }
-    }
+    /// 1 / [divider] brightness scaling
+    pub brightness_divider: u8,
 }
 
 impl Cube {
-    pub fn new() -> Cube {
+    pub fn new(brightness_divider: u8) -> Cube {
         let blank_frame: [Apa106Led; 64] = [Apa106Led {
             red: 1,
             green: 0,
             blue: 0,
         }; 64];
 
-        Cube { frame: blank_frame }
+        Cube {
+            frame: blank_frame,
+            brightness_divider,
+        }
     }
 
     pub fn frame(&self) -> &[Apa106Led; 64] {

@@ -21,7 +21,7 @@ fn main() {
     floor.set_color(0.2, 0.2, 0.2);
     floor.append_rotation_wrt_center(&align_z_up);
 
-    let mut cube = Cube::new();
+    let mut cube = Cube::new(1);
 
     let mut voxels = Vec::new();
 

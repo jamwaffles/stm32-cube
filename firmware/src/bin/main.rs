@@ -36,7 +36,7 @@ type DmaInterface = SpiTxDma<
 >;
 
 // 1000 / FPS should produce an integer for better accuracy.
-const FPS: u32 = 50;
+const FPS: u32 = 30;
 
 #[app(device = stm32f1xx_hal::stm32, peripherals = true, monotonic = rtic::cyccnt::CYCCNT)]
 const APP: () = {
@@ -114,7 +114,7 @@ const APP: () = {
         // let buf = singleton!(: [u8; DATA_LEN] = [OFF_BYTE; DATA_LEN]).unwrap();
         // unsafe { DATA[DATA.len() - 1] = 0x00 };
 
-        let mut cube = Cube::new();
+        let mut cube = Cube::new(8);
 
         cube.fill(Apa106Led {
             red: 2,
@@ -162,13 +162,16 @@ const APP: () = {
             for (led_idx, colour) in cube.frame().iter().enumerate() {
                 let start = led_idx * (8 * 3);
 
-                for (byte_idx, bit) in colour.as_bitbang_data().iter().enumerate() {
+                for (byte_idx, bit) in colour
+                    .divide_by(cube.brightness_divider)
+                    .as_bitbang_data()
+                    .iter()
+                    .enumerate()
+                {
                     unsafe { DATA[start + byte_idx] = *bit }
                 }
             }
         });
-
-        // let mut spi_dma: &mut DmaInterface = cx.resources.spi_dma;
 
         // The following code is ripped straight out of the STM32F1xx lib, without all the ownership
         // stuff.
@@ -213,7 +216,7 @@ const APP: () = {
         // we need a fence here for the same reason we need one in `Transfer.wait`
         atomic::compiler_fence(Ordering::Acquire);
 
-        status.toggle().unwrap();
+        // status.toggle().unwrap();
     }
 
     #[task(binds = TIM1_UP, priority = 2, spawn = [ flush ], resources = [ timer, state, cube, time])]

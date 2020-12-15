@@ -60,6 +60,14 @@ impl Apa106Led {
         }
     }
 
+    pub fn divide_by(&self, divisor: u8) -> Self {
+        Self {
+            red: self.red / divisor,
+            green: self.green / divisor,
+            blue: self.blue / divisor,
+        }
+    }
+
     pub fn as_bitbang_data(&self) -> [u8; 24] {
         colour_to_raw(&self)
     }
