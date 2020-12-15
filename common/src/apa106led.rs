@@ -59,6 +59,58 @@ impl Apa106Led {
             blue: lerp(b1, b2, ratio) as u8,
         }
     }
+
+    pub fn as_bitbang_data(&self) -> [u8; 24] {
+        colour_to_raw(&self)
+    }
+}
+
+const fn bit_is_set(byte: u8, bit_index: u8) -> bool {
+    (byte & (1 << bit_index)) != 0
+}
+
+fn colour_to_raw(input: &Apa106Led) -> [u8; 24] {
+    let mut bytes: [u8; 24] = [0; 24];
+
+    // Gamma correct colours
+    // let gamma_corrected_input = Apa106Led {
+    //  red: GAMMA_MAP[input.red as usize],
+    //  green: GAMMA_MAP[input.green as usize],
+    //  blue: GAMMA_MAP[input.blue as usize],
+    // };
+
+    // SPI transmits MSB first
+    // Gamma correction
+    // for pos in 0..8 {
+    //  bytes[7 - pos as usize] = if bit_is_set(gamma_corrected_input.red, pos as u8) { ON_BYTE } else { OFF_BYTE };
+
+    //  bytes[8 + (7 - pos as usize)] = if bit_is_set(gamma_corrected_input.green, pos as u8) { ON_BYTE } else { OFF_BYTE };
+
+    //  bytes[16 + (7 - pos as usize)] = if bit_is_set(gamma_corrected_input.blue, pos as u8) { ON_BYTE } else { OFF_BYTE };
+    // }
+
+    // No gamma correction
+    for pos in 0..8 {
+        bytes[7 - pos as usize] = if bit_is_set(input.red, pos as u8) {
+            ON_BYTE
+        } else {
+            OFF_BYTE
+        };
+
+        bytes[8 + (7 - pos as usize)] = if bit_is_set(input.green, pos as u8) {
+            ON_BYTE
+        } else {
+            OFF_BYTE
+        };
+
+        bytes[16 + (7 - pos as usize)] = if bit_is_set(input.blue, pos as u8) {
+            ON_BYTE
+        } else {
+            OFF_BYTE
+        };
+    }
+
+    bytes
 }
 
 impl core::ops::Add<Apa106Led> for Apa106Led {

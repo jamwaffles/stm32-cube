@@ -1,6 +1,8 @@
 #![no_std]
 #![no_main]
 
+use core::ptr;
+
 use common::{
     apa106led::Apa106Led,
     cube::Cube,
@@ -10,36 +12,33 @@ use cortex_m::singleton;
 use firmware as _; // global logger + panicking-behavior + memory layout
 use rtic::app;
 use stm32f1xx_hal::{
+    dma::WriteDma,
     gpio::{self, gpioc::PC13, Output, PushPull},
     pac::{self, SPI2},
     prelude::*,
-    spi::{Mode, Phase, Polarity, Spi},
+    spi::{Mode, Phase, Polarity, Spi, SpiTxDma},
     timer::{CountDownTimer, Event, Timer},
 };
 
-type DmaInterface = stm32f1xx_hal::dma::TxDma<
-    stm32f1xx_hal::spi::SpiPayload<
-        SPI2,
-        stm32f1xx_hal::spi::Spi2NoRemap,
-        (
-            stm32f1xx_hal::gpio::gpiob::PB13<
-                stm32f1xx_hal::gpio::Alternate<stm32f1xx_hal::gpio::PushPull>,
-            >,
-            stm32f1xx_hal::gpio::gpiob::PB14<
-                stm32f1xx_hal::gpio::Input<stm32f1xx_hal::gpio::Floating>,
-            >,
-            stm32f1xx_hal::gpio::gpiob::PB15<
-                stm32f1xx_hal::gpio::Alternate<stm32f1xx_hal::gpio::PushPull>,
-            >,
-        ),
-    >,
+type DmaInterface = SpiTxDma<
+    SPI2,
+    stm32f1xx_hal::spi::Spi2NoRemap,
+    (
+        stm32f1xx_hal::gpio::gpiob::PB13<
+            stm32f1xx_hal::gpio::Alternate<stm32f1xx_hal::gpio::PushPull>,
+        >,
+        stm32f1xx_hal::gpio::gpiob::PB14<stm32f1xx_hal::gpio::Input<stm32f1xx_hal::gpio::Floating>>,
+        stm32f1xx_hal::gpio::gpiob::PB15<
+            stm32f1xx_hal::gpio::Alternate<stm32f1xx_hal::gpio::PushPull>,
+        >,
+    ),
     stm32f1xx_hal::dma::dma1::C5,
 >;
 
 // 1000 / FPS should produce an integer for better accuracy.
-const FPS: u32 = 5;
+const FPS: u32 = 50;
 
-#[app(device = stm32f1xx_hal::stm32, peripherals = true)]
+#[app(device = stm32f1xx_hal::stm32, peripherals = true, monotonic = rtic::cyccnt::CYCCNT)]
 const APP: () = {
     struct Resources {
         status: PC13<Output<PushPull>>,
@@ -144,10 +143,82 @@ const APP: () = {
         }
     }
 
-    #[task(binds = TIM1_UP, resources = [status, timer, state, cube, time])]
+    #[task(priority = 1, resources = [ cube, spi_dma, status ])]
+    fn flush(cx: flush::Context) {
+        const DATA_LEN: usize = (64 * 8 * 3) + 1;
+        static mut DATA: [u8; DATA_LEN] = [0x00; DATA_LEN];
+
+        let flush::Resources {
+            mut cube,
+            spi_dma,
+            status,
+            ..
+        } = cx.resources;
+
+        use core::sync::atomic::{self, Ordering};
+        use stm32f1xx_hal::dma::TransferPayload;
+
+        cube.lock(|cube| {
+            for (led_idx, colour) in cube.frame().iter().enumerate() {
+                let start = led_idx * (8 * 3);
+
+                for (byte_idx, bit) in colour.as_bitbang_data().iter().enumerate() {
+                    unsafe { DATA[start + byte_idx] = *bit }
+                }
+            }
+        });
+
+        // let mut spi_dma: &mut DmaInterface = cx.resources.spi_dma;
+
+        // The following code is ripped straight out of the STM32F1xx lib, without all the ownership
+        // stuff.
+
+        unsafe {
+            spi_dma
+                .channel
+                .set_peripheral_address(&(*SPI2::ptr()).dr as *const _ as u32, false);
+            spi_dma
+                .channel
+                .set_memory_address(DATA.as_ptr() as u32, true);
+            spi_dma.channel.set_transfer_length(DATA.len());
+        }
+        atomic::compiler_fence(Ordering::Release);
+        spi_dma.channel.ch().cr.modify(|_, w| {
+            w.mem2mem()
+                .clear_bit()
+                .pl()
+                .medium()
+                .msize()
+                .bits8()
+                .psize()
+                .bits8()
+                .circ()
+                .clear_bit()
+                .dir()
+                .set_bit()
+        });
+        spi_dma.start();
+        while spi_dma.channel.in_progress() {}
+
+        atomic::compiler_fence(Ordering::Acquire);
+
+        spi_dma.stop();
+
+        // we need a read here to make the Acquire fence effective
+        // we do *not* need this if `dma.stop` does a RMW operation
+        unsafe {
+            ptr::read_volatile(&0);
+        }
+
+        // we need a fence here for the same reason we need one in `Transfer.wait`
+        atomic::compiler_fence(Ordering::Acquire);
+
+        status.toggle().unwrap();
+    }
+
+    #[task(binds = TIM1_UP, priority = 2, spawn = [ flush ], resources = [ timer, state, cube, time])]
     fn update(cx: update::Context) {
         let update::Resources {
-            status,
             timer,
             state,
             cube,
@@ -155,14 +226,16 @@ const APP: () = {
             ..
         } = cx.resources;
 
-        status.toggle().unwrap();
+        timer.clear_update_interrupt_flag();
 
         *time += 1000 / FPS;
 
+        cx.spawn.flush().expect("Failed to spawn");
+
         state.drive(*time, cube);
+    }
 
-        defmt::trace!("Ping");
-
-        timer.clear_update_interrupt_flag();
+    extern "C" {
+        fn EXTI0();
     }
 };

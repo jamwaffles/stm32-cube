@@ -1,5 +1,8 @@
 use crate::{apa106led::Apa106Led, voxel::Voxel};
 
+const ON_BYTE: u8 = 0b1111_1100;
+const OFF_BYTE: u8 = 0b1100_0000;
+
 #[derive(Debug, Clone, Copy)]
 pub struct Cube {
     frame: [Apa106Led; 64],
