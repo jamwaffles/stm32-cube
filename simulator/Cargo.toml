@@ -6,9 +6,8 @@ edition = "2018"
 default-run = "simulator"
 
 [dependencies]
-embedded-graphics = { version = "=0.7.0-alpha.2", path = "../../embedded-graphics" }
-embedded-graphics-simulator = { version = "*", path = "../../simulator" }
-sdl2 = "0.32.2"
+embedded-graphics = "0.7.1"
+sdl2 = "0.35.2"
 common = { path = "../common" }
-nalgebra = "0.23.1"
-kiss3d = "0.28.0"
+kiss3d = "0.35.0"
+embedded-graphics-simulator = "0.4.0"
