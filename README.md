@@ -41,3 +41,7 @@ The cycle time for one bit is 1.71us, or ~585KHz. Because I use 4 SPI bits to tr
 > SysClk / (CPSDVSR \* (1 + SCR))
 
 In my case I'm using a `SysClk` of 80MHz so the closest CPSDVSR and SCR values I get are 2 and 16 respectively, resulting in a frequency of **2.35MHz**. This is close enough to the target frequency that it should work fine and does for me in testing.
+
+## Pattern ideas
+
+Start with a blank cube. Each LED quickly fades up to full brightness, then back to a baseline brightness, then sloooowly fades to black again after a short delay. Kind of like super stylised non-distracting fireworks/fireflies. The pattern ends by letting every LED fade slowly to black without lighting any new ones.
