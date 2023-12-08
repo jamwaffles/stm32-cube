@@ -1,18 +1,10 @@
-use common::{apa106led::Apa106Led, cube::Cube, patterns::*, transitions::*};
-use core::f32::consts::PI;
+use common::{cube::Cube, patterns::*, transitions::*};
 use embedded_graphics::{
-    fonts::{Font6x8, Text},
-    pixelcolor::Rgb888,
-    prelude::*,
-    primitives::Line,
-    primitives::{line::Intersection, Circle, Polyline},
-    style::PrimitiveStyleBuilder,
-    style::{MonoTextStyle, PrimitiveStyle},
+    pixelcolor::Rgb888, prelude::*, primitives::Circle, primitives::PrimitiveStyleBuilder,
 };
 use embedded_graphics_simulator::{
     OutputSettingsBuilder, SimulatorDisplay, SimulatorEvent, Window,
 };
-use sdl2::keyboard::Keycode;
 use std::time::Instant;
 
 const SIZE: i32 = 15;
@@ -97,19 +89,17 @@ impl State {
 fn update(time: u32, state: &mut State, cube: &mut Cube) {
     let delta = time - state.current_start;
 
-    cube.fill_iter(state.pattern.update_iter(time, state.frame_delta));
+    cube.fill_iter(state.pattern.update_iter(time));
 
     if let Some(ref mut transition) = state.transition {
         let transition_delta = time - transition.transition_start;
 
         if !transition.transition.is_complete(transition_delta) {
             let frame_delta = state.frame_delta;
-            let update_iter = transition.next_pattern.update_iter(time, state.frame_delta);
+            let update_iter = transition.next_pattern.update_iter(time);
 
             for (current, next) in cube.frame_mut().iter_mut().zip(update_iter) {
-                let new = transition
-                    .transition
-                    .transition_pixel(time, frame_delta, *current, next);
+                let new = transition.transition.transition_pixel(time, *current, next);
 
                 *current = new;
             }
@@ -161,7 +151,7 @@ fn main() -> Result<(), core::convert::Infallible> {
         current_start: 0,
         frame_delta: 0,
     };
-    let mut cube = Cube::new();
+    let mut cube = Cube::new(1);
 
     let mut prev_time = 0;
 
